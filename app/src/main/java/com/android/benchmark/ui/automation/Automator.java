@@ -88,7 +88,7 @@ public class Automator extends HandlerThread
         private AutomateCallback mCallback;
         private Window mWindow;
 
-        LinkedList<Interaction> mInteractions;
+        LinkedList<Interaction> mInteractions = new LinkedList<>();
         private UiBenchmarkResult mResults;
 
         AutomatorHandler(Looper looper, Window window, CollectorThread collectorThread,
@@ -100,7 +100,6 @@ public class Automator extends HandlerThread
             mCallback = callback;
             mWindow = window;
             mCollectorThread = collectorThread;
-            mInteractions = new LinkedList<>();
             mTestName = testName;
             mRunId = runId;
             mIteration = iteration;
