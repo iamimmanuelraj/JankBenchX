@@ -95,13 +95,12 @@ public class BenchmarkRegistry {
     }
 
     @BenchmarkCategory int getCategory(int category) {
-        switch (category) {
-            case BenchmarkCategory.COMPUTE:
-                return BenchmarkCategory.COMPUTE;
-            case BenchmarkCategory.UI:
-                return BenchmarkCategory.UI;
-            default:
-                return BenchmarkCategory.GENERIC;
+        if (category == BenchmarkCategory.COMPUTE) {
+            return BenchmarkCategory.COMPUTE;
+        } else if (category == BenchmarkCategory.UI) {
+            return BenchmarkCategory.UI;
+        } else {
+            return BenchmarkCategory.GENERIC;
         }
     }
 
@@ -191,48 +190,46 @@ public class BenchmarkRegistry {
     }
 
     public static String getCategoryString(int category) {
-        switch (category) {
-            case BenchmarkCategory.UI:
-                return "UI";
-            case BenchmarkCategory.COMPUTE:
-                return "Compute";
-            case BenchmarkCategory.GENERIC:
-                return "Generic";
-            default:
-                return "";
+        if (category == BenchmarkCategory.COMPUTE) {
+            return "Compute";
+        } else if (category == BenchmarkCategory.UI) {
+            return "UI";
+        } else if (category == BenchmarkCategory.GENERIC) {
+            return "Generic";
+        } else {
+            return "";
         }
     }
 
     public static String getBenchmarkName(Context context, int benchmarkId) {
-        switch (benchmarkId) {
-            case R.id.benchmark_list_view_scroll:
-                return context.getString(R.string.list_view_scroll_name);
-            case R.id.benchmark_image_list_view_scroll:
-                return context.getString(R.string.image_list_view_scroll_name);
-            case R.id.benchmark_shadow_grid:
-                return context.getString(R.string.shadow_grid_name);
-            case R.id.benchmark_text_high_hitrate:
-                return context.getString(R.string.text_high_hitrate_name);
-            case R.id.benchmark_text_low_hitrate:
-                return context.getString(R.string.text_low_hitrate_name);
-            case R.id.benchmark_edit_text_input:
-                return context.getString(R.string.edit_text_input_name);
-            case R.id.benchmark_memory_bandwidth:
-                return context.getString(R.string.memory_bandwidth_name);
-            case R.id.benchmark_memory_latency:
-                return context.getString(R.string.memory_latency_name);
-            case R.id.benchmark_power_management:
-                return context.getString(R.string.power_management_name);
-            case R.id.benchmark_cpu_heat_soak:
-                return context.getString(R.string.cpu_heat_soak_name);
-            case R.id.benchmark_cpu_gflops:
-                return context.getString(R.string.cpu_gflops_name);
-            case R.id.benchmark_overdraw:
-                return context.getString(R.string.overdraw_name);
-            case R.id.benchmark_bitmap_upload:
-                return context.getString(R.string.bitmap_upload_name);
-            default:
-                return "Some Benchmark";
+        if (benchmarkId == R.id.benchmark_list_view_scroll) {
+            return context.getString(R.string.list_view_scroll_name);
+        } else if (benchmarkId == R.id.benchmark_image_list_view_scroll) {
+            return context.getString(R.string.image_list_view_scroll_name);
+        } else if (benchmarkId == R.id.benchmark_shadow_grid) {
+            return context.getString(R.string.shadow_grid_name);
+        } else if (benchmarkId == R.id.benchmark_text_high_hitrate) {
+            return context.getString(R.string.text_high_hitrate_name);
+        } else if (benchmarkId == R.id.benchmark_text_low_hitrate) {
+            return context.getString(R.string.text_low_hitrate_name);
+        } else if (benchmarkId == R.id.benchmark_edit_text_input) {
+            return context.getString(R.string.edit_text_input_name);
+        } else if (benchmarkId == R.id.benchmark_memory_bandwidth) {
+            return context.getString(R.string.memory_bandwidth_name);
+        } else if (benchmarkId == R.id.benchmark_memory_latency) {
+            return context.getString(R.string.memory_latency_name);
+        } else if (benchmarkId == R.id.benchmark_power_management) {
+            return context.getString(R.string.power_management_name);
+        } else if (benchmarkId == R.id.benchmark_cpu_heat_soak) {
+            return context.getString(R.string.cpu_heat_soak_name);
+        } else if (benchmarkId == R.id.benchmark_cpu_gflops) {
+            return context.getString(R.string.cpu_gflops_name);
+        } else if (benchmarkId == R.id.benchmark_overdraw) {
+            return context.getString(R.string.overdraw_name);
+        } else if (benchmarkId == R.id.benchmark_bitmap_upload) {
+            return context.getString(R.string.bitmap_upload_name);
+        } else {
+            return "Some Benchmark";
         }
     }
 }

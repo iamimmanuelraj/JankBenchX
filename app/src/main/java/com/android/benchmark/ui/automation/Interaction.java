@@ -82,15 +82,11 @@ public class Interaction {
     }
 
     public List<MotionEvent> getEvents() {
-        switch (mType) {
-            case Type.FLING:
-                mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-                break;
-            case Type.PINCH:
-                break;
-            case Type.TAP:
-                mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-                break;
+        if (mType == Type.FLING) {
+            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
+        } else if (mType == Type.TAP) {
+            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
+        } else if (mType == Type.PINCH) {
         }
 
         return mEvents;

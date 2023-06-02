@@ -121,27 +121,19 @@ public class TestInterface {
                     }
                 }
 
-                switch (command) {
-                    case CommandExit:
-                        mRun = false;
-                        break;
-                    case TestPowerManagement:
-                        float score = mTI.testPowerManagement(b);
-                        mCallback.onTestResult(command, 0);
-                        break;
-                    case TestMemoryBandwidth:
-                        mTI.testCPUMemoryBandwidth(b);
-                        break;
-                    case TestMemoryLatency:
-                        mTI.testCPUMemoryLatency(b);
-                        break;
-                    case TestHeatSoak:
-                        mTI.testCPUHeatSoak(b);
-                        break;
-                    case TestGFlops:
-                        mTI.testCPUGFlops(b);
-                        break;
-
+                if (command == CommandExit) {
+                    mRun = false;
+                } else if (command == TestPowerManagement) {
+                    float score = mTI.testPowerManagement(b);
+                    mCallback.onTestResult(command, 0);
+                } else if (command == TestMemoryBandwidth) {
+                    mTI.testCPUMemoryBandwidth(b);
+                } else if (command == TestMemoryLatency) {
+                    mTI.testCPUMemoryLatency(b);
+                } else if (command == TestHeatSoak) {
+                    mTI.testCPUHeatSoak(b);
+                } else if (command == TestGFlops) {
+                    mTI.testCPUGFlops(b);
                 }
 
                 //mViewToUpdate.post(new Runnable() {

@@ -187,36 +187,18 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
     }
 
     private boolean isCompute(int id) {
-        switch (id) {
-            case R.id.benchmark_cpu_gflops:
-            case R.id.benchmark_cpu_heat_soak:
-            case R.id.benchmark_memory_bandwidth:
-            case R.id.benchmark_memory_latency:
-            case R.id.benchmark_power_management:
-                return true;
-            default:
-                return false;
+        if (id == R.id.benchmark_cpu_gflops || id == R.id.benchmark_cpu_heat_soak || id == R.id.benchmark_memory_bandwidth || id == R.id.benchmark_memory_latency || id == R.id.benchmark_power_management) {
+            return true;
+        } else {
+            return false;
         }
     }
 
     private static boolean isValidBenchmark(int benchmarkId) {
-        switch (benchmarkId) {
-            case R.id.benchmark_list_view_scroll:
-            case R.id.benchmark_image_list_view_scroll:
-            case R.id.benchmark_shadow_grid:
-            case R.id.benchmark_text_high_hitrate:
-            case R.id.benchmark_text_low_hitrate:
-            case R.id.benchmark_edit_text_input:
-            case R.id.benchmark_overdraw:
-            case R.id.benchmark_bitmap_upload:
-            case R.id.benchmark_memory_bandwidth:
-            case R.id.benchmark_memory_latency:
-            case R.id.benchmark_power_management:
-            case R.id.benchmark_cpu_heat_soak:
-            case R.id.benchmark_cpu_gflops:
-                return true;
-            default:
-                return false;
+        if (benchmarkId == R.id.benchmark_cpu_gflops || benchmarkId == R.id.benchmark_cpu_heat_soak || benchmarkId == R.id.benchmark_memory_bandwidth || benchmarkId == R.id.benchmark_memory_latency || benchmarkId == R.id.benchmark_power_management) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -332,63 +314,48 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
 
         System.out.println("iteration: " + iteration);
 
-        switch (id) {
-            case R.id.benchmark_list_view_scroll:
-                intent = new Intent(getApplicationContext(), ListViewScrollActivity.class);
-                break;
-            case R.id.benchmark_image_list_view_scroll:
-                intent = new Intent(getApplicationContext(), ImageListViewScrollActivity.class);
-                break;
-            case R.id.benchmark_shadow_grid:
-                intent = new Intent(getApplicationContext(), ShadowGridActivity.class);
-                break;
-            case R.id.benchmark_text_high_hitrate:
-                intent = new Intent(getApplicationContext(), TextScrollActivity.class);
-                intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 80);
-                intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
-                break;
-            case R.id.benchmark_text_low_hitrate:
-                intent = new Intent(getApplicationContext(), TextScrollActivity.class);
-                intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 20);
-                intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
-                break;
-            case R.id.benchmark_edit_text_input:
-                intent = new Intent(getApplicationContext(), EditTextInputActivity.class);
-                break;
-            case R.id.benchmark_overdraw:
-                intent = new Intent(getApplicationContext(), FullScreenOverdrawActivity.class);
-                break;
-            case R.id.benchmark_bitmap_upload:
-                intent = new Intent(getApplicationContext(), BitmapUploadActivity.class);
-                break;
-            case R.id.benchmark_memory_bandwidth:
-                syntheticTestId = 0;
-                intent = new Intent(getApplicationContext(), MemoryActivity.class);
-                intent.putExtra("test", syntheticTestId);
-                break;
-            case R.id.benchmark_memory_latency:
-                syntheticTestId = 1;
-                intent = new Intent(getApplicationContext(), MemoryActivity.class);
-                intent.putExtra("test", syntheticTestId);
-                break;
-            case R.id.benchmark_power_management:
-                syntheticTestId = 2;
-                intent = new Intent(getApplicationContext(), MemoryActivity.class);
-                intent.putExtra("test", syntheticTestId);
-                break;
-            case R.id.benchmark_cpu_heat_soak:
-                syntheticTestId = 3;
-                intent = new Intent(getApplicationContext(), MemoryActivity.class);
-                intent.putExtra("test", syntheticTestId);
-                break;
-            case R.id.benchmark_cpu_gflops:
-                syntheticTestId = 4;
-                intent = new Intent(getApplicationContext(), MemoryActivity.class);
-                intent.putExtra("test", syntheticTestId);
-                break;
-
-            default:
-               intent = null;
+        if (id == R.id.benchmark_list_view_scroll) {
+            intent = new Intent(getApplicationContext(), ListViewScrollActivity.class);
+        } else if (id == R.id.benchmark_image_list_view_scroll) {
+            intent = new Intent(getApplicationContext(), ImageListViewScrollActivity.class);
+        } else if (id == R.id.benchmark_shadow_grid) {
+            intent = new Intent(getApplicationContext(), ShadowGridActivity.class);
+        } else if (id == R.id.benchmark_text_high_hitrate) {
+            intent = new Intent(getApplicationContext(), TextScrollActivity.class);
+            intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 80);
+            intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
+        } else if (id == R.id.benchmark_text_low_hitrate) {
+            intent = new Intent(getApplicationContext(), TextScrollActivity.class);
+            intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 20);
+            intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
+        } else if (id == R.id.benchmark_edit_text_input) {
+            intent = new Intent(getApplicationContext(), EditTextInputActivity.class);
+        } else if (id == R.id.benchmark_overdraw) {
+            intent = new Intent(getApplicationContext(), FullScreenOverdrawActivity.class);
+        } else if (id == R.id.benchmark_bitmap_upload) {
+            intent = new Intent(getApplicationContext(), BitmapUploadActivity.class);
+        } else if (id == R.id.benchmark_memory_bandwidth) {
+            syntheticTestId = 0;
+            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent.putExtra("test", syntheticTestId);
+        } else if (id == R.id.benchmark_memory_latency) {
+            syntheticTestId = 1;
+            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent.putExtra("test", syntheticTestId);
+        } else if (id == R.id.benchmark_power_management) {
+            syntheticTestId = 2;
+            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent.putExtra("test", syntheticTestId);
+        } else if (id == R.id.benchmark_cpu_heat_soak) {
+            syntheticTestId = 3;
+            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent.putExtra("test", syntheticTestId);
+        } else if (id == R.id.benchmark_cpu_gflops) {
+            syntheticTestId = 4;
+            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent.putExtra("test", syntheticTestId);
+        } else {
+            intent = null;
         }
 
         if (intent != null) {
@@ -402,15 +369,10 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        switch (requestCode) {
-            case R.id.benchmark_shadow_grid:
-            case R.id.benchmark_list_view_scroll:
-            case R.id.benchmark_image_list_view_scroll:
-            case R.id.benchmark_text_high_hitrate:
-            case R.id.benchmark_text_low_hitrate:
-            case R.id.benchmark_edit_text_input:
-                break;
-            default:
+        if (requestCode == R.id.benchmark_shadow_grid || requestCode == R.id.benchmark_list_view_scroll || requestCode == R.id.benchmark_image_list_view_scroll || requestCode == R.id.benchmark_text_high_hitrate || requestCode == R.id.benchmark_text_low_hitrate || requestCode == R.id.benchmark_edit_text_input) {
+            // Do something
+        } else {
+            // Do something else
         }
     }
 

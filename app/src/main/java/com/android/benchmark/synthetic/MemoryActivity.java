@@ -80,25 +80,16 @@ public class MemoryActivity extends Activity {
         Intent i = getIntent();
         mActiveTest = i.getIntExtra("test", 0);
 
-        switch (mActiveTest) {
-            case 0:
-                mTI.runMemoryBandwidth();
-                break;
-            case 1:
-                mTI.runMemoryLatency();
-                break;
-            case 2:
-                mTI.runPowerManagement();
-                break;
-            case 3:
-                mTI.runCPUHeatSoak();
-                break;
-            case 4:
-                mTI.runCPUGFlops();
-                break;
-            default:
-                break;
-
+        if (mActiveTest == 0) {
+            mTI.runMemoryBandwidth();
+        } else if (mActiveTest == 1) {
+            mTI.runMemoryLatency();
+        } else if (mActiveTest == 2) {
+            mTI.runPowerManagement();
+        } else if (mActiveTest == 3) {
+            mTI.runCPUHeatSoak();
+        } else if (mActiveTest == 4) {
+            mTI.runCPUGFlops();
         }
     }
 

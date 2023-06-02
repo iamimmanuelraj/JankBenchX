@@ -112,26 +112,22 @@ public class Automator extends HandlerThread
                 return;
             }
 
-            switch (msg.what) {
-                case MSG_NEXT_INTERACTION:
-                    if (!nextInteraction()) {
-                        stopCollector();
-                        writeResults();
-                        mCallback.onPostAutomate();
-                    }
-                    break;
-                case MSG_ON_AUTOMATE:
-                    mCollectorThread.attachToWindow(mWindow);
-                    mCallback.setInteractions(mInteractions);
-                    mCallback.onAutomate();
-                    postNextInteraction();
-                    break;
-                case MSG_ON_POST_INTERACTION:
-                    List<FrameMetrics> collectedStats = (List<FrameMetrics>)msg.obj;
-                    persistResults(collectedStats);
-                    mCallback.onPostInteraction(collectedStats);
-                    postNextInteraction();
-                    break;
+            if (msg.what == MSG_NEXT_INTERACTION) {
+                if (!nextInteraction()) {
+                    stopCollector();
+                    writeResults();
+                    mCallback.onPostAutomate();
+                }
+            } else if (msg.what == MSG_ON_AUTOMATE) {
+                mCollectorThread.attachToWindow(mWindow);
+                mCallback.setInteractions(mInteractions);
+                mCallback.onAutomate();
+                postNextInteraction();
+            } else if (msg.what == MSG_ON_POST_INTERACTION) {
+                List<FrameMetrics> collectedStats = (List<FrameMetrics>)msg.obj;
+                persistResults(collectedStats);
+                mCallback.onPostInteraction(collectedStats);
+                postNextInteraction();
             }
         }
 
