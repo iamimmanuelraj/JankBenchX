@@ -3,11 +3,11 @@ apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     namespace 'com.android.benchmark'
-    compileSdkVersion 33
+    compileSdkVersion 34
     defaultConfig {
         applicationId "com.android.benchmark"
         minSdkVersion 24
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode 6
         versionName "2.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
