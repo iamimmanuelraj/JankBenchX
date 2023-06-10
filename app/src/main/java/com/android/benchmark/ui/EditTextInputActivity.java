@@ -18,6 +18,9 @@ package com.android.benchmark.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -29,6 +32,7 @@ import com.android.benchmark.ui.automation.Interaction;
 
 public class EditTextInputActivity extends AppCompatActivity {
 
+    @Nullable
     private Automator mAutomator;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -151,6 +155,7 @@ public class EditTextInputActivity extends AppCompatActivity {
         }
     }
 
+    @NonNull
     private String getRunFilename() {
         String builder = this.getClass().getSimpleName() +
                 System.currentTimeMillis();

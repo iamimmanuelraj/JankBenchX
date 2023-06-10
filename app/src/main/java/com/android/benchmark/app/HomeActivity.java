@@ -31,6 +31,8 @@ import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -98,7 +100,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -107,6 +109,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             new AsyncTask<Void, Void, Void>() {
+                @Nullable
                 @Override
                 protected Void doInBackground(final Void... voids) {
                     try {
@@ -140,6 +143,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
             new AsyncTask<Void, Void, Void>() {
                 boolean success;
 
+                @Nullable
                 @Override
                 protected Void doInBackground(final Void... voids) {
                     runOnUiThread(new Runnable() {

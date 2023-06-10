@@ -24,6 +24,9 @@ import android.os.SystemClock;
 import android.view.FrameMetrics;
 import android.view.Window;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,10 +36,13 @@ import java.util.List;
  */
 final class CollectorThread extends HandlerThread {
     private FrameStatsCollector mCollector;
+    @Nullable
     private Window mAttachedWindow;
+    @NonNull
     private final List<FrameMetrics> mFrameTimingStats;
     private long mLastFrameTime;
     private WatchdogHandler mWatchdog;
+    @NonNull
     private final WeakReference<CollectorListener> mListener;
 
     private volatile boolean mCollecting;
@@ -102,7 +108,7 @@ final class CollectorThread extends HandlerThread {
     }
 
     @TargetApi(24)
-    public void attachToWindow(final Window window) {
+    public void attachToWindow(@NonNull final Window window) {
         if (null != mAttachedWindow) {
             this.mAttachedWindow.removeOnFrameMetricsAvailableListener(this.mCollector);
         }

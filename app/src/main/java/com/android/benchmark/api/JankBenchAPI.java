@@ -6,6 +6,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.view.FrameMetrics;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.config.Constants;
 import com.android.benchmark.models.Entry;
 import com.android.benchmark.models.Result;
@@ -27,7 +30,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public enum JankBenchAPI {
     ;
 
-    public static boolean uploadResults(final Context context, final String baseUrl) {
+    public static boolean uploadResults(final Context context, @NonNull final String baseUrl) {
         boolean success= false;
         final Entry entry = JankBenchAPI.createEntry(context);
 
@@ -40,7 +43,7 @@ public enum JankBenchAPI {
         return success;
     }
 
-    private static boolean upload(final Entry entry, final String url) throws IOException {
+    private static boolean upload(final Entry entry, @NonNull final String url) throws IOException {
         final Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -54,6 +57,7 @@ public enum JankBenchAPI {
         return response.isSuccessful();
     }
 
+    @NonNull
     private static Entry createEntry(final Context context) {
         final int lastRunId = GlobalResultsStore.getInstance(context).getLastRunId();
         final SQLiteDatabase db = GlobalResultsStore.getInstance(context).getReadableDatabase();
@@ -120,6 +124,7 @@ public enum JankBenchAPI {
         return entry;
     }
 
+    @Nullable
     private static String getKernelVersion() {
         final List<String> unameOutput = Shell.sh("uname -a").exec().getOut();
         final String kernel_version = 0 == unameOutput.size() ? null : unameOutput.get(0);

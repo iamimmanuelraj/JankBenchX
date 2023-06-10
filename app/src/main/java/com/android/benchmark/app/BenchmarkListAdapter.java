@@ -24,6 +24,9 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.registry.BenchmarkGroup;
 import com.android.benchmark.registry.BenchmarkRegistry;
 import com.android.benchmark.R;
@@ -57,6 +60,7 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
         return this.mRegistry.getBenchmarkGroup(groupPosition);
     }
 
+    @Nullable
     @Override
     public Object getChild(final int groupPosition, final int childPosition) {
         final BenchmarkGroup benchmarkGroup = this.mRegistry.getBenchmarkGroup(groupPosition);
@@ -83,8 +87,9 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
         return false;
     }
 
+    @NonNull
     @Override
-    public View getGroupView(final int groupPosition, final boolean isExpanded, View convertView, final ViewGroup parent) {
+    public View getGroupView(final int groupPosition, final boolean isExpanded, @Nullable View convertView, final ViewGroup parent) {
         final BenchmarkGroup group = (BenchmarkGroup) this.getGroup(groupPosition);
         if (null == convertView) {
             convertView = this.mInflater.inflate(R.layout.benchmark_list_group_row, null);
@@ -96,9 +101,10 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
         return convertView;
     }
 
+    @NonNull
     @Override
     public View getChildView(final int groupPosition, final int childPosition, final boolean isLastChild,
-                             View convertView, final ViewGroup parent) {
+                             @Nullable View convertView, final ViewGroup parent) {
         final BenchmarkGroup.Benchmark benchmark =
                 (BenchmarkGroup.Benchmark) this.getChild(groupPosition, childPosition);
         if (null == convertView) {

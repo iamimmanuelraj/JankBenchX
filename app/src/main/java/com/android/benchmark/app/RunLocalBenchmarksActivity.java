@@ -20,6 +20,9 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.fragment.app.ListFragment;
@@ -89,7 +92,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onListItemClick(final ListView l, final View v, final int position, final long id) {
+        public void onListItemClick(final ListView l, @NonNull final View v, final int position, final long id) {
             if (null != getActivity().findViewById(R.id.list_fragment_container)) {
                 final FragmentManager fm = this.getActivity().getSupportFragmentManager();
                 final UiResultsFragment resultsView = new UiResultsFragment();
@@ -109,6 +112,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         int id;
         int runCount;
         int totalCount;
+        @NonNull
         ArrayList<String> mResultsUri = new ArrayList<>();
 
         LocalBenchmark(final int id, final int runCount) {
@@ -147,7 +151,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         return -1;
     }
 
-    private void initLocalBenchmarks(final Intent intent) {
+    private void initLocalBenchmarks(@NonNull final Intent intent) {
         this.mBenchmarksToRun = new ArrayList<>();
         int[] enabledIds = intent.getIntArrayExtra(BenchmarkGroup.BENCHMARK_EXTRA_ENABLED_TESTS);
         final int runCount = intent.getIntExtra(BenchmarkGroup.BENCHMARK_EXTRA_RUN_COUNT, RunLocalBenchmarksActivity.RUN_COUNT);
@@ -209,6 +213,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         TextView scoreView = this.findViewById(R.id.score_text_view);
         scoreView.setText("Computing score...");
         new AsyncTask<Void, Void, Integer>()  {
+            @NonNull
             @Override
             protected Integer doInBackground(final Void... voids) {
                 final GlobalResultsStore gsr =
@@ -274,6 +279,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
             new AsyncTask<Void, Void, Void>() {
                 boolean success;
 
+                @Nullable
                 @Override
                 protected Void doInBackground(final Void... voids) {
                     runOnUiThread(new Runnable() {
@@ -392,8 +398,9 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
             return RunLocalBenchmarksActivity.this.mBenchmarksToRun.get(i).id;
         }
 
+        @NonNull
         @Override
-        public View getView(final int i, View convertView, final ViewGroup parent) {
+        public View getView(final int i, @Nullable View convertView, final ViewGroup parent) {
             if (null == convertView) {
                 convertView = this.mInflater.inflate(R.layout.running_benchmark_list_item, null);
             }

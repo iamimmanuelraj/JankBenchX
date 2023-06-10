@@ -19,6 +19,8 @@ package com.android.benchmark.results;
 import android.annotation.TargetApi;
 import android.view.FrameMetrics;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
@@ -55,15 +57,16 @@ public class UiBenchmarkResult {
             FrameMetrics.TOTAL_DURATION,
     };
 
+    @NonNull
     private final DescriptiveStatistics[] mStoredStatistics;
 
-    public UiBenchmarkResult(final List<FrameMetrics> instances, final int refresh_rate) {
+    public UiBenchmarkResult(@NonNull final List<FrameMetrics> instances, final int refresh_rate) {
         this.initializeThresholds(refresh_rate);
         this.mStoredStatistics = new DescriptiveStatistics[UiBenchmarkResult.METRICS.length];
         this.insertMetrics(instances);
     }
 
-    public UiBenchmarkResult(final double[] values, final int refresh_rate) {
+    public UiBenchmarkResult(@NonNull final double[] values, final int refresh_rate) {
         this.initializeThresholds(refresh_rate);
         this.mStoredStatistics = new DescriptiveStatistics[UiBenchmarkResult.METRICS.length];
         this.insertValues(values);
@@ -78,11 +81,11 @@ public class UiBenchmarkResult {
         this.JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = this.BASE_SCORE / (double) this.ZERO_SCORE_ABOVE_THRESHOLD_MS;
     }
 
-    public void update(final List<FrameMetrics> instances) {
+    public void update(@NonNull final List<FrameMetrics> instances) {
         this.insertMetrics(instances);
     }
 
-    public void update(final double[] values) {
+    public void update(@NonNull final double[] values) {
         this.insertValues(values);
     }
 
@@ -244,7 +247,7 @@ public class UiBenchmarkResult {
         return -1;
     }
 
-    private void insertMetrics(final List<FrameMetrics> instances) {
+    private void insertMetrics(@NonNull final List<FrameMetrics> instances) {
         for (final FrameMetrics frame : instances) {
             for (int i = 0; i < UiBenchmarkResult.METRICS.length; i++) {
                 DescriptiveStatistics stats = this.mStoredStatistics[i];
@@ -258,7 +261,7 @@ public class UiBenchmarkResult {
         }
     }
 
-    private void insertValues(final double[] values) {
+    private void insertValues(@NonNull final double[] values) {
         if (values.length != UiBenchmarkResult.METRICS.length) {
             throw new IllegalArgumentException("invalid values array");
         }

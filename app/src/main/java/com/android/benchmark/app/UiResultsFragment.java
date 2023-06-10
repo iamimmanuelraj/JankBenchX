@@ -19,6 +19,8 @@ package com.android.benchmark.app;
 import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.ListFragment;
 import android.util.Log;
@@ -50,6 +52,7 @@ public class UiResultsFragment extends ListFragment {
 
     private final AsyncTask<Void, Void, ArrayList<Map<String, String>>> mLoadScoresTask =
             new AsyncTask<Void, Void, ArrayList<Map<String, String>>>() {
+        @NonNull
         @Override
         protected ArrayList<Map<String, String>> doInBackground(final Void... voids) {
             final String[] data;

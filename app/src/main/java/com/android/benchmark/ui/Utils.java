@@ -20,6 +20,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import androidx.annotation.NonNull;
+
 import java.util.Random;
 
 public enum Utils {
@@ -27,7 +29,8 @@ public enum Utils {
 
     private static final int RANDOM_WORD_LENGTH = 10;
 
-    public static String getRandomWord(final Random random, final int length) {
+    @NonNull
+    public static String getRandomWord(@NonNull final Random random, final int length) {
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < length; i++) {
             final char base = random.nextBoolean() ? 'A' : 'a';
@@ -37,6 +40,7 @@ public enum Utils {
         return builder.toString();
     }
 
+    @NonNull
     public static String[] buildStringList(final int count) {
         final Random random = new Random(0);
         final String[] result = new String[count];
@@ -65,6 +69,7 @@ public enum Utils {
     private static final int PARAGRAPH_MISS_MIN_LENGTH = 4;
     private static final int PARAGRAPH_MISS_MAX_LENGTH = 9;
 
+    @NonNull
     static String[] buildParagraphListWithHitPercentage(final int paragraphCount, final int hitPercentage) {
         if (0 > hitPercentage || 100 < hitPercentage) throw new IllegalArgumentException();
 
@@ -95,7 +100,7 @@ public enum Utils {
 
 
     public static int calculateInSampleSize(
-            final BitmapFactory.Options options, final int reqWidth, final int reqHeight) {
+            @NonNull final BitmapFactory.Options options, final int reqWidth, final int reqHeight) {
         // Raw height and width of image
         int height = options.outHeight;
         int width = options.outWidth;

@@ -24,6 +24,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.view.FrameMetrics;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.android.benchmark.models.Result;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -50,7 +52,8 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         this.mContext = context;
     }
 
-    public static GlobalResultsStore getInstance(final Context context) {
+    @NonNull
+    public static GlobalResultsStore getInstance(@NonNull final Context context) {
         if (null == sInstance) {
             GlobalResultsStore.sInstance = new GlobalResultsStore(context.getApplicationContext());
         }
@@ -59,7 +62,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onCreate(final SQLiteDatabase sqLiteDatabase) {
+    public void onCreate(@NonNull final SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.UI_RESULTS_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " name TEXT," +
@@ -85,7 +88,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
     }
 
     public void storeRunResults(final String testName, final int runId, final int iteration,
-                                final UiBenchmarkResult result, final float refresh_rate) {
+                                @NonNull final UiBenchmarkResult result, final float refresh_rate) {
         final SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
 
@@ -144,6 +147,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
 
     }
 
+    @NonNull
     public ArrayList<UiBenchmarkResult> loadTestResults(final String testName, final int runId) {
         final SQLiteDatabase db = this.getReadableDatabase();
         final ArrayList<UiBenchmarkResult> resultList = new ArrayList<>();
@@ -215,6 +219,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         return resultList;
     }
 
+    @NonNull
     public HashMap<String, ArrayList<UiBenchmarkResult>> loadDetailedResults(final int runId) {
         final SQLiteDatabase db = this.getReadableDatabase();
         final HashMap<String, ArrayList<UiBenchmarkResult>> results = new HashMap<>();
@@ -305,7 +310,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         return runId;
     }
 
-    public int loadRefreshRate(final int runId, final SQLiteDatabase db) {
+    public int loadRefreshRate(final int runId, @NonNull final SQLiteDatabase db) {
         int refresh_rate = -1;
 
         String[] columnsToQuery = new String[] {
@@ -321,6 +326,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         return refresh_rate;
     }
 
+    @NonNull
     public HashMap<String, UiBenchmarkResult> loadDetailedAggregatedResults(final int runId) {
         final SQLiteDatabase db = this.getReadableDatabase();
         final HashMap<String, UiBenchmarkResult> testsResults = new HashMap<>();
@@ -463,7 +469,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
     }
 
     private void writeRawResults(final int runId,
-                                 final HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults) {
+                                 @NonNull final HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults) {
         String path = this.mContext.getFilesDir() +
                 "/" +
                 runId +
@@ -496,7 +502,7 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(final SQLiteDatabase sqLiteDatabase, final int oldVersion, final int currentVersion) {
+    public void onUpgrade(@NonNull final SQLiteDatabase sqLiteDatabase, final int oldVersion, final int currentVersion) {
         if (VERSION > oldVersion) {
             sqLiteDatabase.execSQL("ALTER TABLE "
                     + GlobalResultsStore.UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;");

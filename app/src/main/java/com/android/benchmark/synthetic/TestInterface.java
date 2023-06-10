@@ -19,6 +19,8 @@ package com.android.benchmark.synthetic;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
@@ -58,6 +60,7 @@ public class TestInterface {
 
     private final View mViewToUpdate;
 
+    @NonNull
     private final LooperThread mLT;
 
     TestInterface(final View v, final int runtimeSeconds, final TestResultCallback callback) {
@@ -83,6 +86,7 @@ public class TestInterface {
         private final TestInterface mTI;
         private final TestResultCallback mCallback;
 
+        @NonNull
         Queue<Integer> mCommandQueue = new LinkedList<Integer>();
 
         LooperThread(final TestInterface ti, final TestResultCallback callback) {
@@ -151,7 +155,7 @@ public class TestInterface {
         }
     }
 
-    void postTextToView(final TextView v, final String s) {
+    void postTextToView(@NonNull final TextView v, final String s) {
         TextView tv = v;
         String ts = s;
 
@@ -163,7 +167,7 @@ public class TestInterface {
 
     }
 
-    float calcAverage(final float[] data) {
+    float calcAverage(@NonNull final float[] data) {
         float total = 0.0f;
         for (int ct=0; ct < data.length; ct++) {
             total += data[ct];
@@ -171,7 +175,7 @@ public class TestInterface {
         return total / data.length;
     }
 
-    void makeGraph(final float[] data, final float[] lines) {
+    void makeGraph(@NonNull final float[] data, final float[] lines) {
         for (int ct = 0; ct < data.length; ct++) {
             lines[ct * 4] = ct;
             lines[ct * 4 + 1] = 500.0f - data[ct];

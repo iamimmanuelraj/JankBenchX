@@ -25,6 +25,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -40,6 +41,7 @@ public class FullScreenOverdrawActivity extends AppCompatActivity {
     private Automator mAutomator;
 
     private class OverdrawView extends View {
+        @NonNull
         Paint paint = new Paint();
         int mColorValue;
 
@@ -64,7 +66,7 @@ public class FullScreenOverdrawActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onDraw(final Canvas canvas) {
+        protected void onDraw(@NonNull final Canvas canvas) {
             this.paint.setColor(Color.rgb(this.mColorValue, 255 - this.mColorValue, 255));
 
             for (int i = 0; 10 > i; i++) {

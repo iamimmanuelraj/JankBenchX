@@ -17,6 +17,9 @@ package com.android.benchmark.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.ListFragment;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,10 +32,11 @@ import com.android.benchmark.ui.automation.Automator;
 import com.android.benchmark.ui.automation.Interaction;
 
 public class ShadowGridActivity extends AppCompatActivity {
+    @Nullable
     private Automator mAutomator;
     public static class MyListFragment extends ListFragment {
 	    @Override
-	    public void onViewCreated(final View view, final Bundle savedInstanceState) {
+	    public void onViewCreated(@NonNull final View view, final Bundle savedInstanceState) {
 		    super.onViewCreated(view, savedInstanceState);
             this.getListView().setDivider(null);
 	    }

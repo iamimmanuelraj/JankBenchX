@@ -25,6 +25,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -79,7 +81,7 @@ public class BitmapUploadActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onDraw(final Canvas canvas) {
+        protected void onDraw(@NonNull final Canvas canvas) {
             if (null != mBitmap) {
                 this.mRect.set(0, 0, this.getWidth(), this.getHeight());
                 canvas.drawBitmap(this.mBitmap, null, this.mRect, null);

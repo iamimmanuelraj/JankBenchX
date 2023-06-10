@@ -30,6 +30,9 @@ import android.view.MotionEvent;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.results.GlobalResultsStore;
 import com.android.benchmark.results.UiBenchmarkResult;
 
@@ -44,14 +47,20 @@ public class Automator extends HandlerThread
 
     private static final int PRE_READY_STATE_COUNT = 3;
     private static final String TAG = "Benchmark.Automator";
+    @NonNull
     private final AtomicInteger mReadyState;
 
+    @Nullable
     private AutomateCallback mCallback;
+    @Nullable
     private Window mWindow;
+    @Nullable
     private AutomatorHandler mHandler;
+    @Nullable
     private CollectorThread mCollectorThread;
     private int mRunId;
     private int mIteration;
+    @Nullable
     private String mTestName;
 
     public static class AutomateCallback {
@@ -82,12 +91,14 @@ public class Automator extends HandlerThread
         private final int mRunId;
         private final int mIteration;
 
+        @NonNull
         private final Instrumentation mInstrumentation;
         private volatile boolean mCancelled;
         private final CollectorThread mCollectorThread;
         private final AutomateCallback mCallback;
         private final Window mWindow;
 
+        @NonNull
         LinkedList<Interaction> mInteractions = new LinkedList<>();
         private UiBenchmarkResult mResults;
 
@@ -106,7 +117,7 @@ public class Automator extends HandlerThread
         }
 
         @Override
-        public void handleMessage(final Message msg) {
+        public void handleMessage(@NonNull final Message msg) {
             if (this.mCancelled) {
                 return;
             }
@@ -149,7 +160,7 @@ public class Automator extends HandlerThread
             return false;
         }
 
-        private void doInteraction(final Interaction interaction) {
+        private void doInteraction(@NonNull final Interaction interaction) {
             if (this.mCancelled) {
                 return;
             }
@@ -180,7 +191,7 @@ public class Automator extends HandlerThread
             this.sendMessage(msg);
         }
 
-        private void persistResults(final List<FrameMetrics> stats) {
+        private void persistResults(@NonNull final List<FrameMetrics> stats) {
             if (stats.isEmpty()) {
                 return;
             }
@@ -201,7 +212,7 @@ public class Automator extends HandlerThread
         }
     }
 
-    private static float getFrameRate(final Context context) {
+    private static float getFrameRate(@NonNull final Context context) {
         DisplayManager displayManager = context.getSystemService(DisplayManager.class);
         final Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
         return display.getRefreshRate();

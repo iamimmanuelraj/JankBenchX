@@ -18,6 +18,8 @@ package com.android.benchmark.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import android.view.FrameMetrics;
 import android.view.MotionEvent;
@@ -37,6 +39,7 @@ public class ListViewScrollActivity extends ListActivityBase {
     private static final int LIST_SIZE = 400;
     private static final int INTERACTION_COUNT = 4;
 
+    @Nullable
     private Automator mAutomator;
 
     @Override

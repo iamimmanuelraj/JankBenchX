@@ -22,6 +22,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.registry.BenchmarkRegistry;
 import com.android.benchmark.ui.automation.Automator;
 import com.android.benchmark.ui.automation.Interaction;
@@ -35,6 +38,7 @@ public class TextScrollActivity extends ListActivityBase {
     private static final int PARAGRAPH_COUNT = 200;
 
     private int mHitPercentage = 100;
+    @Nullable
     private Automator mAutomator;
     private String mName;
 
@@ -105,6 +109,7 @@ public class TextScrollActivity extends ListActivityBase {
         }
     }
 
+    @NonNull
     @Override
     protected ListAdapter createListAdapter() {
         return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,

@@ -26,6 +26,9 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.R;
 
 import java.lang.ref.WeakReference;
@@ -60,6 +63,7 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
 
     private final HashMap<View, BitmapWorkerTask> mInFlight = new HashMap<>();
 
+    @NonNull
     @Override
     protected ListAdapter createListAdapter() {
         return new ImageListAdapter();
@@ -71,6 +75,7 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
     }
 
     class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
+        @NonNull
         private final WeakReference<ImageView> imageViewReference;
         private int data;
         private int cacheIdx;
@@ -84,14 +89,14 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
 
         // Decode image in background.
         @Override
-        protected Bitmap doInBackground(final Integer... params) {
+        protected Bitmap doInBackground(@NonNull final Integer... params) {
             this.data = params[0];
             return Utils.decodeSampledBitmapFromResource(ImageListViewScrollActivity.this.getResources(), this.data, 100, 100);
         }
 
         // Once complete, see if ImageView is still around and set bitmap.
         @Override
-        protected void onPostExecute(final Bitmap bitmap) {
+        protected void onPostExecute(@Nullable final Bitmap bitmap) {
             if (null != bitmap) {
                 ImageView imageView = this.imageViewReference.get();
                 if (null != imageView) {
@@ -119,6 +124,7 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
             return ImageListViewScrollActivity.LIST_SIZE;
         }
 
+        @Nullable
         @Override
         public Object getItem(final int postition) {
             return null;
@@ -129,8 +135,9 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
             return postition;
         }
 
+        @NonNull
         @Override
-        public View getView(final int position, View convertView, final ViewGroup parent) {
+        public View getView(final int position, @Nullable View convertView, final ViewGroup parent) {
             if (null == convertView) {
                 convertView = LayoutInflater.from(ImageListViewScrollActivity.this.getBaseContext())
                         .inflate(R.layout.image_scroll_list_item, parent, false);

@@ -21,6 +21,9 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.CheckBox;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 /**
  * Logical grouping of benchmarks
  */
@@ -70,7 +73,7 @@ public class BenchmarkGroup {
         public String getName() { return this.mName; }
 
         @Override
-        public void onClick(final View view) {
+        public void onClick(@NonNull final View view) {
             mEnabled = ((CheckBox) view).isChecked();
         }
     }
@@ -107,6 +110,7 @@ public class BenchmarkGroup {
         this.mIntent = intent;
     }
 
+    @Nullable
     public Intent getIntent() {
         final int[] enabledBenchmarksIds = this.getEnabledBenchmarksIds();
         if (0 != enabledBenchmarksIds.length) {

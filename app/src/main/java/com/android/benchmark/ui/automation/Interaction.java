@@ -18,6 +18,9 @@ package com.android.benchmark.ui.automation;
 
 import android.os.SystemClock;
 import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -35,9 +38,12 @@ public class Interaction {
     private List<MotionEvent> mEvents;
 
     // Interaction parameters
+    @Nullable
     private final float[] mXPositions;
+    @Nullable
     private final float[] mYPositions;
     private final long mDuration;
+    @Nullable
     private final int[] mKeyCodes;
     @Type
     private final int mType;
@@ -54,30 +60,35 @@ public class Interaction {
         int KEY_EVENT = 3;
     }
 
+    @NonNull
     public static Interaction newFling(final float startX, final float startY,
                                        final float endX, final float endY, final long duration) {
        return new Interaction(Interaction.Type.FLING, new float[]{startX, endX},
                new float[]{startY, endY}, duration);
     }
 
+    @NonNull
     public static Interaction newFlingDown(final float startX, final float startY) {
         return new Interaction(Interaction.Type.FLING,
                 new float[]{startX, startX},
                 new float[]{startY, startY + Interaction.DEFAULT_FLING_SIZE_PX}, Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
+    @NonNull
     public static Interaction newFlingUp(final float startX, final float startY) {
         return new Interaction(Interaction.Type.FLING,
                 new float[]{startX, startX}, new float[]{startY, startY - Interaction.DEFAULT_FLING_SIZE_PX},
                 Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
+    @NonNull
     public static Interaction newTap(final float startX, final float startY) {
         return new Interaction(Interaction.Type.TAP,
                 new float[]{startX, startX}, new float[]{startY, startY},
                 Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
+    @NonNull
     public static Interaction newKeyInput(final int[] keyCodes) {
         return new Interaction(keyCodes);
     }
@@ -101,8 +112,9 @@ public class Interaction {
         return this.mKeyCodes;
     }
 
+    @NonNull
     private static List<MotionEvent> createInterpolatedEventList(
-            final float[] xPos, final float[] yPos, final long duration) {
+            @NonNull final float[] xPos, @NonNull final float[] yPos, final long duration) {
         final long startTime = SystemClock.uptimeMillis() + 100;
         final List<MotionEvent> result = new ArrayList<>();
 
@@ -160,7 +172,7 @@ public class Interaction {
     }
 
     private Interaction(@Interaction.Type final int type,
-                        final List<Float> xPositions, final List<Float> yPositions, final long duration) {
+                        @NonNull final List<Float> xPositions, @NonNull final List<Float> yPositions, final long duration) {
         if (xPositions.size() != yPositions.size()) {
             throw new IllegalArgumentException("must have equal number of x and y positions");
         }

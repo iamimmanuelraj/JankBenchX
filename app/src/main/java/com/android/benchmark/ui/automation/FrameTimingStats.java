@@ -17,6 +17,7 @@
 package com.android.benchmark.ui.automation;
 
 import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -59,18 +60,19 @@ public class FrameTimingStats {
         int FRAME_STATS_COUNT = 14; // must always be last
     }
 
+    @NonNull
     private final long[] mStats;
 
-    FrameTimingStats(final long[] stats) {
+    FrameTimingStats(@NonNull final long[] stats) {
         this.mStats = Arrays.copyOf(stats, Index.FRAME_STATS_COUNT);
     }
 
-    public FrameTimingStats(final DataInputStream inputStream) throws IOException {
+    public FrameTimingStats(@NonNull final DataInputStream inputStream) throws IOException {
         this.mStats = new long[Index.FRAME_STATS_COUNT];
         this.update(inputStream);
     }
 
-    public void update(final DataInputStream inputStream) throws IOException {
+    public void update(@NonNull final DataInputStream inputStream) throws IOException {
         for (int i = 0; i < this.mStats.length; i++) {
             this.mStats[i] = inputStream.readLong();
         }

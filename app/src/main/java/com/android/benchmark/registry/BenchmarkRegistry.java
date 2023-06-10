@@ -29,6 +29,9 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.Xml;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.benchmark.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -53,6 +56,7 @@ public class BenchmarkRegistry {
     private static final String TAG_BENCHMARK_GROUP = "com.android.benchmark.BenchmarkGroup";
     private static final String TAG_BENCHMARK = "com.android.benchmark.Benchmark";
 
+    @NonNull
     private final List<BenchmarkGroup> mGroups;
 
     private final Context mContext;
@@ -63,7 +67,8 @@ public class BenchmarkRegistry {
         this.loadBenchmarks();
     }
 
-    private Intent getIntentFromInfo(final ActivityInfo inf) {
+    @NonNull
+    private Intent getIntentFromInfo(@NonNull final ActivityInfo inf) {
         final Intent intent = new Intent();
         intent.setClassName(inf.packageName, inf.name);
         return intent;
@@ -85,7 +90,7 @@ public class BenchmarkRegistry {
         }
     }
 
-    private boolean seekToTag(final XmlPullParser parser, final String tag)
+    private boolean seekToTag(@NonNull final XmlPullParser parser, @NonNull final String tag)
             throws XmlPullParserException, IOException {
         int eventType = parser.getEventType();
         while (XmlPullParser.START_TAG != eventType && XmlPullParser.END_DOCUMENT != eventType) {
@@ -104,7 +109,8 @@ public class BenchmarkRegistry {
         }
     }
 
-    private List<BenchmarkGroup> parseBenchmarkGroup(final ActivityInfo activityInfo) {
+    @Nullable
+    private List<BenchmarkGroup> parseBenchmarkGroup(@NonNull final ActivityInfo activityInfo) {
         final PackageManager pm = this.mContext.getPackageManager();
 
         final ComponentName componentName = new ComponentName(
@@ -182,6 +188,7 @@ public class BenchmarkRegistry {
         return 0;
     }
 
+    @Nullable
     public BenchmarkGroup getBenchmarkGroup(final int benchmarkIndex) {
         if (benchmarkIndex >= this.mGroups.size()) {
             return null;
@@ -190,6 +197,7 @@ public class BenchmarkRegistry {
         return this.mGroups.get(benchmarkIndex);
     }
 
+    @NonNull
     public static String getCategoryString(final int category) {
         if (BenchmarkCategory.COMPUTE == category) {
             return "Compute";
@@ -202,7 +210,7 @@ public class BenchmarkRegistry {
         }
     }
 
-    public static String getBenchmarkName(final Context context, final int benchmarkId) {
+    public static String getBenchmarkName(@NonNull final Context context, final int benchmarkId) {
         if (benchmarkId == R.id.benchmark_list_view_scroll) {
             return context.getString(R.string.list_view_scroll_name);
         } else if (benchmarkId == R.id.benchmark_image_list_view_scroll) {
