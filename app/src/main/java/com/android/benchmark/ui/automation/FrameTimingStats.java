@@ -61,26 +61,26 @@ public class FrameTimingStats {
 
     private final long[] mStats;
 
-    FrameTimingStats(long[] stats) {
-        mStats = Arrays.copyOf(stats, Index.FRAME_STATS_COUNT);
+    FrameTimingStats(final long[] stats) {
+        this.mStats = Arrays.copyOf(stats, Index.FRAME_STATS_COUNT);
     }
 
-    public FrameTimingStats(DataInputStream inputStream) throws IOException {
-        mStats = new long[Index.FRAME_STATS_COUNT];
-        update(inputStream);
+    public FrameTimingStats(final DataInputStream inputStream) throws IOException {
+        this.mStats = new long[Index.FRAME_STATS_COUNT];
+        this.update(inputStream);
     }
 
-    public void update(DataInputStream inputStream) throws IOException {
-        for (int i = 0; i < mStats.length; i++) {
-            mStats[i] = inputStream.readLong();
+    public void update(final DataInputStream inputStream) throws IOException {
+        for (int i = 0; i < this.mStats.length; i++) {
+            this.mStats[i] = inputStream.readLong();
         }
     }
 
-    public long get(@Index int index) {
-        return mStats[index];
+    public long get(@Index final int index) {
+        return this.mStats[index];
     }
 
     public long[] data() {
-        return mStats;
+        return this.mStats;
     }
 }

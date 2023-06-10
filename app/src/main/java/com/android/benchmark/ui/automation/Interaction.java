@@ -39,7 +39,8 @@ public class Interaction {
     private final float[] mYPositions;
     private final long mDuration;
     private final int[] mKeyCodes;
-    private final @Interaction.Type int mType;
+    @Type
+    private final int mType;
 
     @IntDef({
             Interaction.Type.TAP,
@@ -53,77 +54,77 @@ public class Interaction {
         int KEY_EVENT = 3;
     }
 
-    public static Interaction newFling(float startX, float startY,
-                                       float endX, float endY, long duration) {
+    public static Interaction newFling(final float startX, final float startY,
+                                       final float endX, final float endY, final long duration) {
        return new Interaction(Interaction.Type.FLING, new float[]{startX, endX},
                new float[]{startY, endY}, duration);
     }
 
-    public static Interaction newFlingDown(float startX, float startY) {
+    public static Interaction newFlingDown(final float startX, final float startY) {
         return new Interaction(Interaction.Type.FLING,
                 new float[]{startX, startX},
-                new float[]{startY, startY + DEFAULT_FLING_SIZE_PX}, DEFAULT_FLING_DURATION_MS);
+                new float[]{startY, startY + Interaction.DEFAULT_FLING_SIZE_PX}, Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
-    public static Interaction newFlingUp(float startX, float startY) {
+    public static Interaction newFlingUp(final float startX, final float startY) {
         return new Interaction(Interaction.Type.FLING,
-                new float[]{startX, startX}, new float[]{startY, startY - DEFAULT_FLING_SIZE_PX},
-                        DEFAULT_FLING_DURATION_MS);
+                new float[]{startX, startX}, new float[]{startY, startY - Interaction.DEFAULT_FLING_SIZE_PX},
+                Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
-    public static Interaction newTap(float startX, float startY) {
+    public static Interaction newTap(final float startX, final float startY) {
         return new Interaction(Interaction.Type.TAP,
                 new float[]{startX, startX}, new float[]{startY, startY},
-                DEFAULT_FLING_DURATION_MS);
+                Interaction.DEFAULT_FLING_DURATION_MS);
     }
 
-    public static Interaction newKeyInput(int[] keyCodes) {
+    public static Interaction newKeyInput(final int[] keyCodes) {
         return new Interaction(keyCodes);
     }
 
     public List<MotionEvent> getEvents() {
-        if (mType == Type.FLING) {
-            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-        } else if (mType == Type.TAP) {
-            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-        } else if (mType == Type.PINCH) {
+        if (Type.FLING == mType) {
+            this.mEvents = Interaction.createInterpolatedEventList(this.mXPositions, this.mYPositions, this.mDuration);
+        } else if (Type.TAP == mType) {
+            this.mEvents = Interaction.createInterpolatedEventList(this.mXPositions, this.mYPositions, this.mDuration);
+        } else if (Type.PINCH == mType) {
         }
 
-        return mEvents;
+        return this.mEvents;
     }
 
     public int getType() {
-        return mType;
+        return this.mType;
     }
 
     public int[] getKeyCodes() {
-        return mKeyCodes;
+        return this.mKeyCodes;
     }
 
     private static List<MotionEvent> createInterpolatedEventList(
-            float[] xPos, float[] yPos, long duration) {
-        long startTime = SystemClock.uptimeMillis() + 100;
-        List<MotionEvent> result = new ArrayList<>();
+            final float[] xPos, final float[] yPos, final long duration) {
+        final long startTime = SystemClock.uptimeMillis() + 100;
+        final List<MotionEvent> result = new ArrayList<>();
 
         float startX = xPos[0];
         float startY = yPos[0];
 
-        MotionEvent downEvent = MotionEvent.obtain(
+        final MotionEvent downEvent = MotionEvent.obtain(
                 startTime, startTime, MotionEvent.ACTION_DOWN, startX, startY, 0);
         result.add(downEvent);
 
         for (int i = 1; i < xPos.length; i++) {
-            float endX = xPos[i];
-            float endY = yPos[i];
-            float stepX = (endX - startX) / STEP_COUNT;
-            float stepY = (endY - startY) / STEP_COUNT;
-            float stepT = duration / STEP_COUNT;
+            final float endX = xPos[i];
+            final float endY = yPos[i];
+            final float stepX = (endX - startX) / Interaction.STEP_COUNT;
+            final float stepY = (endY - startY) / Interaction.STEP_COUNT;
+            final float stepT = duration / Interaction.STEP_COUNT;
 
-            for (int j = 0; j < STEP_COUNT; j++) {
-                long deltaT = Math.round(j * stepT);
-                long deltaX = Math.round(j * stepX);
-                long deltaY = Math.round(j * stepY);
-                MotionEvent moveEvent = MotionEvent.obtain(startTime, startTime + deltaT,
+            for (int j = 0; STEP_COUNT > j; j++) {
+                final long deltaT = Math.round(j * stepT);
+                final long deltaX = Math.round(j * stepX);
+                final long deltaY = Math.round(j * stepY);
+                final MotionEvent moveEvent = MotionEvent.obtain(startTime, startTime + deltaT,
                         MotionEvent.ACTION_MOVE, startX + deltaX, startY + deltaY, 0);
                 result.add(moveEvent);
             }
@@ -132,52 +133,54 @@ public class Interaction {
             startY = endY;
         }
 
-        float lastX = xPos[xPos.length - 1];
-        float lastY = yPos[yPos.length - 1];
-        MotionEvent lastEvent = MotionEvent.obtain(startTime, startTime + duration,
+        final float lastX = xPos[xPos.length - 1];
+        final float lastY = yPos[yPos.length - 1];
+        final MotionEvent lastEvent = MotionEvent.obtain(startTime, startTime + duration,
                 MotionEvent.ACTION_UP, lastX, lastY, 0);
         result.add(lastEvent);
 
         return result;
     }
 
-    private Interaction(@Interaction.Type int type,
-                        float[] xPos, float[] yPos, long duration) {
-        mType = type;
-        mXPositions = xPos;
-        mYPositions = yPos;
-        mDuration = duration;
-        mKeyCodes = null;
+    private Interaction(@Interaction.Type final int type,
+                        final float[] xPos, final float[] yPos, final long duration) {
+        this.mType = type;
+        this.mXPositions = xPos;
+        this.mYPositions = yPos;
+        this.mDuration = duration;
+        this.mKeyCodes = null;
     }
 
-    private Interaction(int[] codes) {
-        mKeyCodes = codes;
-        mType = Type.KEY_EVENT;
-        mYPositions = null;
-        mXPositions = null;
-        mDuration = 0;
+    private Interaction(final int[] codes) {
+        this.mKeyCodes = codes;
+        this.mType = Type.KEY_EVENT;
+        this.mYPositions = null;
+        this.mXPositions = null;
+        this.mDuration = 0;
     }
 
-    private Interaction(@Interaction.Type int type,
-                        List<Float> xPositions, List<Float> yPositions, long duration) {
+    private Interaction(@Interaction.Type final int type,
+                        final List<Float> xPositions, final List<Float> yPositions, final long duration) {
         if (xPositions.size() != yPositions.size()) {
             throw new IllegalArgumentException("must have equal number of x and y positions");
         }
 
         int current = 0;
-        mXPositions = new float[xPositions.size()];
-        for (float p : xPositions) {
-            mXPositions[current++] = p;
+        this.mXPositions = new float[xPositions.size()];
+        for (final float p : xPositions) {
+            this.mXPositions[current] = p;
+            current++;
         }
 
         current = 0;
-        mYPositions = new float[yPositions.size()];
-        for (float p : xPositions) {
-            mXPositions[current++] = p;
+        this.mYPositions = new float[yPositions.size()];
+        for (final float p : xPositions) {
+            this.mXPositions[current] = p;
+            current++;
         }
 
-        mType = type;
-        mDuration = duration;
-        mKeyCodes = null;
+        this.mType = type;
+        this.mDuration = duration;
+        this.mKeyCodes = null;
     }
 }

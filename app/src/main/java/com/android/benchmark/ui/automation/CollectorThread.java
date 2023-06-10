@@ -34,10 +34,10 @@ import java.util.List;
 final class CollectorThread extends HandlerThread {
     private FrameStatsCollector mCollector;
     private Window mAttachedWindow;
-    private List<FrameMetrics> mFrameTimingStats;
+    private final List<FrameMetrics> mFrameTimingStats;
     private long mLastFrameTime;
     private WatchdogHandler mWatchdog;
-    private WeakReference<CollectorListener> mListener;
+    private final WeakReference<CollectorListener> mListener;
 
     private volatile boolean mCollecting;
 
@@ -53,112 +53,112 @@ final class CollectorThread extends HandlerThread {
         private static final int MSG_SCHEDULE = 0;
 
         @Override
-        public void handleMessage(Message msg) {
-            if (!mCollecting) {
+        public void handleMessage(final Message msg) {
+            if (!CollectorThread.this.mCollecting) {
                 return;
             }
 
-            long currentTime = SystemClock.uptimeMillis();
-            if (mLastFrameTime + SCHEDULE_INTERVAL_MILLIS <= currentTime) {
+            final long currentTime = SystemClock.uptimeMillis();
+            if (CollectorThread.this.mLastFrameTime + WatchdogHandler.SCHEDULE_INTERVAL_MILLIS <= currentTime) {
                 // haven't seen a frame in a while, interaction is probably done
-                mCollecting = false;
-                CollectorListener listener = mListener.get();
-                if (listener != null) {
-                    listener.onPostInteraction(mFrameTimingStats);
+                CollectorThread.this.mCollecting = false;
+                final CollectorListener listener = CollectorThread.this.mListener.get();
+                if (null != listener) {
+                    listener.onPostInteraction(CollectorThread.this.mFrameTimingStats);
                 }
             } else {
-                schedule();
+                this.schedule();
             }
         }
 
         public void schedule() {
-            sendMessageDelayed(obtainMessage(MSG_SCHEDULE), SCHEDULE_INTERVAL_MILLIS);
+            this.sendMessageDelayed(this.obtainMessage(WatchdogHandler.MSG_SCHEDULE), WatchdogHandler.SCHEDULE_INTERVAL_MILLIS);
         }
 
         public void deschedule() {
-            removeMessages(MSG_SCHEDULE);
+            this.removeMessages(WatchdogHandler.MSG_SCHEDULE);
         }
     }
 
-    static boolean tripleBuffered = false;
-    static int janks = 0;
-    static int total = 0;
+    static boolean tripleBuffered;
+    static int janks;
+    static int total;
     @TargetApi(24)
     private class FrameStatsCollector implements Window.OnFrameMetricsAvailableListener {
         @Override
-        public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
-            if (!mCollecting) {
+        public void onFrameMetricsAvailable(final Window window, final FrameMetrics frameMetrics, final int dropCount) {
+            if (!CollectorThread.this.mCollecting) {
                 return;
             }
-            mFrameTimingStats.add(new FrameMetrics(frameMetrics));
-            mLastFrameTime = SystemClock.uptimeMillis();
+            CollectorThread.this.mFrameTimingStats.add(new FrameMetrics(frameMetrics));
+            CollectorThread.this.mLastFrameTime = SystemClock.uptimeMillis();
         }
     }
 
-    public CollectorThread(CollectorListener listener) {
+    public CollectorThread(final CollectorListener listener) {
         super("FrameStatsCollectorThread");
-        mFrameTimingStats = new LinkedList<>();
-        mListener = new WeakReference<>(listener);
+        this.mFrameTimingStats = new LinkedList<>();
+        this.mListener = new WeakReference<>(listener);
     }
 
     @TargetApi(24)
-    public void attachToWindow(Window window) {
-        if (mAttachedWindow != null) {
-            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
+    public void attachToWindow(final Window window) {
+        if (null != mAttachedWindow) {
+            this.mAttachedWindow.removeOnFrameMetricsAvailableListener(this.mCollector);
         }
 
-        mAttachedWindow = window;
-        window.addOnFrameMetricsAvailableListener(mCollector, new Handler(getLooper()));
+        this.mAttachedWindow = window;
+        window.addOnFrameMetricsAvailableListener(this.mCollector, new Handler(this.getLooper()));
     }
 
     @TargetApi(24)
     public synchronized void detachFromWindow() {
-        if (mAttachedWindow != null) {
-            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
+        if (null != mAttachedWindow) {
+            this.mAttachedWindow.removeOnFrameMetricsAvailableListener(this.mCollector);
         }
 
-        mAttachedWindow = null;
+        this.mAttachedWindow = null;
     }
 
     @TargetApi(24)
     @Override
     protected void onLooperPrepared() {
         super.onLooperPrepared();
-        mCollector = new FrameStatsCollector();
-        mWatchdog = new WatchdogHandler();
+        this.mCollector = new FrameStatsCollector();
+        this.mWatchdog = new WatchdogHandler();
 
-        CollectorListener listener = mListener.get();
-        if (listener != null) {
+        final CollectorListener listener = this.mListener.get();
+        if (null != listener) {
             listener.onCollectorThreadReady();
         }
     }
 
     public boolean quitCollector() {
-        stopCollecting();
-        detachFromWindow();
-        System.out.println("Jank Percentage: " + (100 * janks/ (double) total) + "%");
-        tripleBuffered = false;
-        total = 0;
-        janks = 0;
-        return quit();
+        this.stopCollecting();
+        this.detachFromWindow();
+        System.out.println("Jank Percentage: " + (100 * CollectorThread.janks / (double) CollectorThread.total) + "%");
+        CollectorThread.tripleBuffered = false;
+        CollectorThread.total = 0;
+        CollectorThread.janks = 0;
+        return this.quit();
     }
 
     void stopCollecting() {
-        if (!mCollecting) {
+        if (!this.mCollecting) {
             return;
         }
 
-        mCollecting = false;
-        mWatchdog.deschedule();
+        this.mCollecting = false;
+        this.mWatchdog.deschedule();
 
 
     }
 
     public void markInteractionStart() {
-        mLastFrameTime = 0;
-        mFrameTimingStats.clear();
-        mCollecting = true;
+        this.mLastFrameTime = 0;
+        this.mFrameTimingStats.clear();
+        this.mCollecting = true;
 
-        mWatchdog.schedule();
+        this.mWatchdog.schedule();
     }
 }

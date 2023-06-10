@@ -31,51 +31,51 @@ public class EditTextInputActivity extends AppCompatActivity {
 
     private Automator mAutomator;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final EditText editText = new EditText(this);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
+        EditText editText = new EditText(this);
+        int runId = this.getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
+        int iteration = this.getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
 
         editText.setWidth(400);
         editText.setHeight(200);
-        setContentView(editText);
+        this.setContentView(editText);
 
-        String testName = getString(R.string.edit_text_input_name);
+        final String testName = this.getString(R.string.edit_text_input_name);
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
+        final ActionBar actionBar = this.getSupportActionBar();
+        if (null != actionBar) {
             actionBar.setTitle(testName);
         }
 
-        mAutomator = new Automator(testName, runId, iteration, getWindow(),
+        this.mAutomator = new Automator(testName, runId, iteration, this.getWindow(),
                 new Automator.AutomateCallback() {
             @Override
             public void onPostAutomate() {
-                Intent result = new Intent();
-                setResult(RESULT_OK, result);
-                finish();
+                final Intent result = new Intent();
+                EditTextInputActivity.this.setResult(Activity.RESULT_OK, result);
+                EditTextInputActivity.this.finish();
             }
 
             @Override
             public void onAutomate() {
 
-                int[] coordinates = new int[2];
+                final int[] coordinates = new int[2];
                 editText.getLocationOnScreen(coordinates);
 
-                int x = coordinates[0];
-                int y = coordinates[1];
+                final int x = coordinates[0];
+                final int y = coordinates[1];
 
-                float width = editText.getWidth();
-                float height = editText.getHeight();
+                final float width = editText.getWidth();
+                final float height = editText.getHeight();
 
-                float middleX = (x + width) / 2;
-                float middleY = (y + height) / 2;
+                final float middleX = (x + width) / 2;
+                final float middleY = (y + height) / 2;
 
-                Interaction tap = Interaction.newTap(middleX, middleY);
-                addInteraction(tap);
+                final Interaction tap = Interaction.newTap(middleX, middleY);
+                this.addInteraction(tap);
 
-                int[] alphabet = {
+                final int[] alphabet = {
                         KeyEvent.KEYCODE_A,
                         KeyEvent.KEYCODE_B,
                         KeyEvent.KEYCODE_C,
@@ -104,7 +104,7 @@ public class EditTextInputActivity extends AppCompatActivity {
                         KeyEvent.KEYCODE_Z,
                         KeyEvent.KEYCODE_SPACE
                 };
-                Interaction typeAlphabet = Interaction.newKeyInput(new int[] {
+                final Interaction typeAlphabet = Interaction.newKeyInput(new int[] {
                         KeyEvent.KEYCODE_A,
                         KeyEvent.KEYCODE_B,
                         KeyEvent.KEYCODE_C,
@@ -134,27 +134,26 @@ public class EditTextInputActivity extends AppCompatActivity {
                         KeyEvent.KEYCODE_SPACE,
                 });
 
-                for (int i = 0; i < 5; i++) {
-                    addInteraction(typeAlphabet);
+                for (int i = 0; 5 > i; i++) {
+                    this.addInteraction(typeAlphabet);
                 }
             }
         });
-        mAutomator.start();
+        this.mAutomator.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mAutomator != null) {
-            mAutomator.cancel();
-            mAutomator = null;
+        if (null != mAutomator) {
+            this.mAutomator.cancel();
+            this.mAutomator = null;
         }
     }
 
     private String getRunFilename() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getSimpleName());
-        builder.append(System.currentTimeMillis());
-        return builder.toString();
+        String builder = this.getClass().getSimpleName() +
+                System.currentTimeMillis();
+        return builder;
     }
 }

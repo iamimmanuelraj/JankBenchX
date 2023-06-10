@@ -41,7 +41,7 @@ public class TestInterface {
     native float nGFlopsTest(long b, long opt);
 
     public static class TestResultCallback {
-        void onTestResult(int command, float result) { }
+        void onTestResult(final int command, final float result) { }
     }
 
     static {
@@ -56,19 +56,19 @@ public class TestInterface {
     TextView mTextMax;
     TextView mTextTypical;
 
-    private View mViewToUpdate;
+    private final View mViewToUpdate;
 
-    private LooperThread mLT;
+    private final LooperThread mLT;
 
-    TestInterface(View v, int runtimeSeconds, TestResultCallback callback) {
-        int buckets = runtimeSeconds * 1000;
-        mLinesLow = new float[buckets * 4];
-        mLinesHigh = new float[buckets * 4];
-        mLinesValue = new float[buckets * 4];
-        mViewToUpdate = v;
+    TestInterface(final View v, final int runtimeSeconds, final TestResultCallback callback) {
+        final int buckets = runtimeSeconds * 1000;
+        this.mLinesLow = new float[buckets * 4];
+        this.mLinesHigh = new float[buckets * 4];
+        this.mLinesValue = new float[buckets * 4];
+        this.mViewToUpdate = v;
 
-        mLT = new LooperThread(this, callback);
-        mLT.start();
+        this.mLT = new LooperThread(this, callback);
+        this.mLT.start();
     }
 
     static class LooperThread extends Thread {
@@ -80,60 +80,60 @@ public class TestInterface {
         public static final int TestGFlops = 6;
 
         private volatile boolean mRun = true;
-        private TestInterface mTI;
-        private TestResultCallback mCallback;
+        private final TestInterface mTI;
+        private final TestResultCallback mCallback;
 
         Queue<Integer> mCommandQueue = new LinkedList<Integer>();
 
-        LooperThread(TestInterface ti, TestResultCallback callback) {
+        LooperThread(final TestInterface ti, final TestResultCallback callback) {
             super("BenchmarkTestThread");
-            mTI = ti;
-            mCallback = callback;
+            this.mTI = ti;
+            this.mCallback = callback;
         }
 
-        void runCommand(int command) {
-            Integer i = Integer.valueOf(command);
+        void runCommand(final int command) {
+            final Integer i = Integer.valueOf(command);
 
             synchronized (this) {
-                mCommandQueue.add(i);
-                notifyAll();
+                this.mCommandQueue.add(i);
+                this.notifyAll();
             }
         }
 
         public void run() {
-            long b = mTI.nInit(0);
-            if (b == 0) {
+            final long b = this.mTI.nInit(0);
+            if (0 == b) {
                 return;
             }
 
-            while (mRun) {
+            while (this.mRun) {
                 int command = 0;
                 synchronized (this) {
-                    if (mCommandQueue.isEmpty()) {
+                    if (this.mCommandQueue.isEmpty()) {
                         try {
-                            wait();
-                        } catch (InterruptedException e) {
+                            this.wait();
+                        } catch (final InterruptedException e) {
                         }
                     }
 
-                    if (!mCommandQueue.isEmpty()) {
-                        command = mCommandQueue.remove();
+                    if (!this.mCommandQueue.isEmpty()) {
+                        command = this.mCommandQueue.remove();
                     }
                 }
 
-                if (command == CommandExit) {
-                    mRun = false;
-                } else if (command == TestPowerManagement) {
-                    float score = mTI.testPowerManagement(b);
-                    mCallback.onTestResult(command, 0);
-                } else if (command == TestMemoryBandwidth) {
-                    mTI.testCPUMemoryBandwidth(b);
-                } else if (command == TestMemoryLatency) {
-                    mTI.testCPUMemoryLatency(b);
-                } else if (command == TestHeatSoak) {
-                    mTI.testCPUHeatSoak(b);
-                } else if (command == TestGFlops) {
-                    mTI.testCPUGFlops(b);
+                if (CommandExit == command) {
+                    this.mRun = false;
+                } else if (TestPowerManagement == command) {
+                    final float score = this.mTI.testPowerManagement(b);
+                    this.mCallback.onTestResult(TestPowerManagement, 0);
+                } else if (TestMemoryBandwidth == command) {
+                    this.mTI.testCPUMemoryBandwidth(b);
+                } else if (TestMemoryLatency == command) {
+                    this.mTI.testCPUMemoryLatency(b);
+                } else if (TestHeatSoak == command) {
+                    this.mTI.testCPUHeatSoak(b);
+                } else if (TestGFlops == command) {
+                    this.mTI.testCPUGFlops(b);
                 }
 
                 //mViewToUpdate.post(new Runnable() {
@@ -143,17 +143,17 @@ public class TestInterface {
                 //});
             }
 
-            mTI.nDestroy(b);
+            this.mTI.nDestroy(b);
         }
 
         void exit() {
-            mRun = false;
+            this.mRun = false;
         }
     }
 
-    void postTextToView(TextView v, String s) {
-        final TextView tv = v;
-        final String ts = s;
+    void postTextToView(final TextView v, final String s) {
+        TextView tv = v;
+        String ts = s;
 
         v.post(new Runnable() {
             public void run() {
@@ -163,109 +163,109 @@ public class TestInterface {
 
     }
 
-    float calcAverage(float[] data) {
-        float total = 0.f;
+    float calcAverage(final float[] data) {
+        float total = 0.0f;
         for (int ct=0; ct < data.length; ct++) {
             total += data[ct];
         }
         return total / data.length;
     }
 
-    void makeGraph(float[] data, float[] lines) {
+    void makeGraph(final float[] data, final float[] lines) {
         for (int ct = 0; ct < data.length; ct++) {
-            lines[ct * 4 + 0] = (float)ct;
-            lines[ct * 4 + 1] = 500.f - data[ct];
-            lines[ct * 4 + 2] = (float)ct;
-            lines[ct * 4 + 3] = 500.f;
+            lines[ct * 4] = ct;
+            lines[ct * 4 + 1] = 500.0f - data[ct];
+            lines[ct * 4 + 2] = ct;
+            lines[ct * 4 + 3] = 500.0f;
         }
     }
 
-    float testPowerManagement(long b) {
-        float[] dat = new float[mLinesLow.length / 4];
-        postTextToView(mTextStatus, "Running single-threaded");
-        nRunPowerManagementTest(b, 1);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesLow);
-        mViewToUpdate.postInvalidate();
-        float avgMin = calcAverage(dat);
+    float testPowerManagement(final long b) {
+        final float[] dat = new float[this.mLinesLow.length / 4];
+        this.postTextToView(this.mTextStatus, "Running single-threaded");
+        this.nRunPowerManagementTest(b, 1);
+        this.nGetData(b, dat);
+        this.makeGraph(dat, this.mLinesLow);
+        this.mViewToUpdate.postInvalidate();
+        final float avgMin = this.calcAverage(dat);
 
-        postTextToView(mTextMin, "Single threaded " + avgMin + " per second");
+        this.postTextToView(this.mTextMin, "Single threaded " + avgMin + " per second");
 
-        postTextToView(mTextStatus, "Running multi-threaded");
-        nRunPowerManagementTest(b, 4);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesHigh);
-        mViewToUpdate.postInvalidate();
-        float avgMax = calcAverage(dat);
-        postTextToView(mTextMax, "Multi threaded " + avgMax + " per second");
+        this.postTextToView(this.mTextStatus, "Running multi-threaded");
+        this.nRunPowerManagementTest(b, 4);
+        this.nGetData(b, dat);
+        this.makeGraph(dat, this.mLinesHigh);
+        this.mViewToUpdate.postInvalidate();
+        final float avgMax = this.calcAverage(dat);
+        this.postTextToView(this.mTextMax, "Multi threaded " + avgMax + " per second");
 
-        postTextToView(mTextStatus, "Running typical");
-        nRunPowerManagementTest(b, 0);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesValue);
-        mViewToUpdate.postInvalidate();
-        float avgTypical = calcAverage(dat);
+        this.postTextToView(this.mTextStatus, "Running typical");
+        this.nRunPowerManagementTest(b, 0);
+        this.nGetData(b, dat);
+        this.makeGraph(dat, this.mLinesValue);
+        this.mViewToUpdate.postInvalidate();
+        final float avgTypical = this.calcAverage(dat);
 
-        float ofIdeal = avgTypical / (avgMax + avgMin) * 200.f;
-        postTextToView(mTextTypical, String.format("Typical mix (50/50) %%%2.0f of ideal", ofIdeal));
+        final float ofIdeal = avgTypical / (avgMax + avgMin) * 200.0f;
+        this.postTextToView(this.mTextTypical, String.format("Typical mix (50/50) %%%2.0f of ideal", ofIdeal));
         return ofIdeal * (avgMax + avgMin);
     }
 
-    float testCPUHeatSoak(long b) {
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running heat soak test");
-        for (int t = 0; t < 1000; t++) {
-            mLinesLow[t * 4 + 0] = (float)t;
-            mLinesLow[t * 4 + 1] = 498.f;
-            mLinesLow[t * 4 + 2] = (float)t;
-            mLinesLow[t * 4 + 3] = 500.f;
+    float testCPUHeatSoak(final long b) {
+        final float[] dat = new float[1000];
+        this.postTextToView(this.mTextStatus, "Running heat soak test");
+        for (int t = 0; 1000 > t; t++) {
+            this.mLinesLow[t * 4] = t;
+            this.mLinesLow[t * 4 + 1] = 498.0f;
+            this.mLinesLow[t * 4 + 2] = t;
+            this.mLinesLow[t * 4 + 3] = 500.0f;
         }
 
-        float peak = 0.f;
-        float total = 0.f;
+        float peak = 0.0f;
+        float total = 0.0f;
         float dThroughput = 0;
         float prev = 0;
-        SummaryStatistics stats = new SummaryStatistics();
-        for (int t = 0; t < 1000; t++) {
-            nRunCPUHeatSoakTest(b, 1);
-            nGetData(b, dat);
+        final SummaryStatistics stats = new SummaryStatistics();
+        for (int t = 0; 1000 > t; t++) {
+            this.nRunCPUHeatSoakTest(b, 1);
+            this.nGetData(b, dat);
 
-            float p = calcAverage(dat);
-            if (prev != 0) {
+            final float p = this.calcAverage(dat);
+            if (0 != prev) {
                 dThroughput += (prev - p);
             }
 
             prev = p;
 
-            mLinesLow[t * 4 + 1] = 499.f - p;
+            this.mLinesLow[t * 4 + 1] = 499.0f - p;
             if (peak < p) {
                 peak = p;
             }
-            for (float f : dat) {
+            for (final float f : dat) {
                 stats.addValue(f);
             }
 
             total += p;
 
-            mViewToUpdate.postInvalidate();
-            postTextToView(mTextMin, "Peak " + peak + " per second");
-            postTextToView(mTextMax, "Current " + p + " per second");
-            postTextToView(mTextTypical, "Average " + (total / (t + 1)) + " per second");
+            this.mViewToUpdate.postInvalidate();
+            this.postTextToView(this.mTextMin, "Peak " + peak + " per second");
+            this.postTextToView(this.mTextMax, "Current " + p + " per second");
+            this.postTextToView(this.mTextTypical, "Average " + (total / (t + 1)) + " per second");
         }
 
 
-        float decreaseOverTime = dThroughput / 1000;
+        final float decreaseOverTime = dThroughput / 1000;
 
         System.out.println("dthroughput/dt: " + decreaseOverTime);
 
-        float score = (float) (stats.getMean() / (stats.getStandardDeviation() * decreaseOverTime));
+        final float score = (float) (stats.getMean() / (stats.getStandardDeviation() * decreaseOverTime));
 
-        postTextToView(mTextStatus, "Score: " + score);
+        this.postTextToView(this.mTextStatus, "Score: " + score);
         return score;
     }
 
-    void testCPUMemoryBandwidth(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
+    void testCPUMemoryBandwidth(final long b) {
+        final int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
                     8, 10, 12, 14, 16, 20, 24, 28,
                     32, 40, 48, 56, 64, 80, 96, 112,
                     128, 160, 192, 224, 256, 320, 384, 448,
@@ -274,50 +274,50 @@ public class TestInterface {
                     8192, 10240, 12288, 14336, 16384
         };
         final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
+        final float[] results = new float[sizeK.length * subSteps];
 
-        nMemTestStart(b);
+        this.nMemTestStart(b);
 
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Bandwidth test");
-        for (int t = 0; t < 1000; t++) {
-            mLinesLow[t * 4 + 0] = (float)t;
-            mLinesLow[t * 4 + 1] = 498.f;
-            mLinesLow[t * 4 + 2] = (float)t;
-            mLinesLow[t * 4 + 3] = 500.f;
+        final float[] dat = new float[1000];
+        this.postTextToView(this.mTextStatus, "Running Memory Bandwidth test");
+        for (int t = 0; 1000 > t; t++) {
+            this.mLinesLow[t * 4] = t;
+            this.mLinesLow[t * 4 + 1] = 498.0f;
+            this.mLinesLow[t * 4 + 2] = t;
+            this.mLinesLow[t * 4 + 3] = 500.0f;
         }
 
         for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
+            this.postTextToView(this.mTextStatus, "Running " + sizeK[i] + " K");
 
-            float rtot = 0.f;
-            for (int j = 0; j < subSteps; j++) {
-                float ret = nMemTestBandwidth(b, sizeK[i] * 1024);
+            float rtot = 0.0f;
+            for (int j = 0; subSteps > j; j++) {
+                final float ret = this.nMemTestBandwidth(b, sizeK[i] * 1024);
                 rtot += ret;
                 results[i * subSteps + j] = ret;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.f - (results[i*15+j] * 20.f);
-                mViewToUpdate.postInvalidate();
+                this.mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - (results[i*15+j] * 20.0f);
+                this.mViewToUpdate.postInvalidate();
             }
             rtot /= subSteps;
 
-            if (sizeK[i] == 2) {
-                postTextToView(mTextMin, "2K " + rtot + " GB/s");
+            if (2 == sizeK[i]) {
+                this.postTextToView(this.mTextMin, "2K " + rtot + " GB/s");
             }
-            if (sizeK[i] == 128) {
-                postTextToView(mTextMax, "128K " + rtot + " GB/s");
+            if (128 == sizeK[i]) {
+                this.postTextToView(this.mTextMax, "128K " + rtot + " GB/s");
             }
-            if (sizeK[i] == 8192) {
-                postTextToView(mTextTypical, "8M " + rtot + " GB/s");
+            if (8192 == sizeK[i]) {
+                this.postTextToView(this.mTextTypical, "8M " + rtot + " GB/s");
             }
 
         }
 
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
+        this.nMemTestEnd(b);
+        this.postTextToView(this.mTextStatus, "Done");
     }
 
-    void testCPUMemoryLatency(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
+    void testCPUMemoryLatency(final long b) {
+        final int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
                 8, 10, 12, 14, 16, 20, 24, 28,
                 32, 40, 48, 56, 64, 80, 96, 112,
                 128, 160, 192, 224, 256, 320, 384, 448,
@@ -326,118 +326,118 @@ public class TestInterface {
                 8192, 10240, 12288, 14336, 16384
         };
         final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
+        final float[] results = new float[sizeK.length * subSteps];
 
-        nMemTestStart(b);
+        this.nMemTestStart(b);
 
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Latency test");
-        for (int t = 0; t < 1000; t++) {
-            mLinesLow[t * 4 + 0] = (float)t;
-            mLinesLow[t * 4 + 1] = 498.f;
-            mLinesLow[t * 4 + 2] = (float)t;
-            mLinesLow[t * 4 + 3] = 500.f;
+        final float[] dat = new float[1000];
+        this.postTextToView(this.mTextStatus, "Running Memory Latency test");
+        for (int t = 0; 1000 > t; t++) {
+            this.mLinesLow[t * 4] = t;
+            this.mLinesLow[t * 4 + 1] = 498.0f;
+            this.mLinesLow[t * 4 + 2] = t;
+            this.mLinesLow[t * 4 + 3] = 500.0f;
         }
 
         for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
+            this.postTextToView(this.mTextStatus, "Running " + sizeK[i] + " K");
 
-            float rtot = 0.f;
-            for (int j = 0; j < subSteps; j++) {
-                float ret = nMemTestLatency(b, sizeK[i] * 1024);
+            float rtot = 0.0f;
+            for (int j = 0; subSteps > j; j++) {
+                float ret = this.nMemTestLatency(b, sizeK[i] * 1024);
                 rtot += ret;
                 results[i * subSteps + j] = ret;
 
-                if (ret > 400.f) ret = 400.f;
-                if (ret < 0.f) ret = 0.f;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.f - ret;
+                if (400.0f < ret) ret = 400.0f;
+                if (0.0f > ret) ret = 0.0f;
+                this.mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret;
                 //android.util.Log.e("bench", "test bw " + sizeK[i] + " - " + ret);
-                mViewToUpdate.postInvalidate();
+                this.mViewToUpdate.postInvalidate();
             }
             rtot /= subSteps;
 
-            if (sizeK[i] == 2) {
-                postTextToView(mTextMin, "2K " + rtot + " ns");
+            if (2 == sizeK[i]) {
+                this.postTextToView(this.mTextMin, "2K " + rtot + " ns");
             }
-            if (sizeK[i] == 128) {
-                postTextToView(mTextMax, "128K " + rtot + " ns");
+            if (128 == sizeK[i]) {
+                this.postTextToView(this.mTextMax, "128K " + rtot + " ns");
             }
-            if (sizeK[i] == 8192) {
-                postTextToView(mTextTypical, "8M " + rtot + " ns");
+            if (8192 == sizeK[i]) {
+                this.postTextToView(this.mTextTypical, "8M " + rtot + " ns");
             }
 
         }
 
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
+        this.nMemTestEnd(b);
+        this.postTextToView(this.mTextStatus, "Done");
     }
 
-    void testCPUGFlops(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7
+    void testCPUGFlops(final long b) {
+        final int[] sizeK = {1, 2, 3, 4, 5, 6, 7
         };
         final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
+        final float[] results = new float[sizeK.length * subSteps];
 
-        nMemTestStart(b);
+        this.nMemTestStart(b);
 
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Latency test");
-        for (int t = 0; t < 1000; t++) {
-            mLinesLow[t * 4 + 0] = (float)t;
-            mLinesLow[t * 4 + 1] = 498.f;
-            mLinesLow[t * 4 + 2] = (float)t;
-            mLinesLow[t * 4 + 3] = 500.f;
+        final float[] dat = new float[1000];
+        this.postTextToView(this.mTextStatus, "Running Memory Latency test");
+        for (int t = 0; 1000 > t; t++) {
+            this.mLinesLow[t * 4] = t;
+            this.mLinesLow[t * 4 + 1] = 498.0f;
+            this.mLinesLow[t * 4 + 2] = t;
+            this.mLinesLow[t * 4 + 3] = 500.0f;
         }
 
         for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
+            this.postTextToView(this.mTextStatus, "Running " + sizeK[i] + " K");
 
-            float rtot = 0.f;
-            for (int j = 0; j < subSteps; j++) {
-                float ret = nGFlopsTest(b, sizeK[i] * 1024);
+            float rtot = 0.0f;
+            for (int j = 0; subSteps > j; j++) {
+                float ret = this.nGFlopsTest(b, sizeK[i] * 1024);
                 rtot += ret;
                 results[i * subSteps + j] = ret;
 
-                if (ret > 400.f) ret = 400.f;
-                if (ret < 0.f) ret = 0.f;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.f - ret;
-                mViewToUpdate.postInvalidate();
+                if (400.0f < ret) ret = 400.0f;
+                if (0.0f > ret) ret = 0.0f;
+                this.mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret;
+                this.mViewToUpdate.postInvalidate();
             }
             rtot /= subSteps;
 
-            if (sizeK[i] == 2) {
-                postTextToView(mTextMin, "2K " + rtot + " ns");
+            if (2 == sizeK[i]) {
+                this.postTextToView(this.mTextMin, "2K " + rtot + " ns");
             }
-            if (sizeK[i] == 128) {
-                postTextToView(mTextMax, "128K " + rtot + " ns");
+            if (128 == sizeK[i]) {
+                this.postTextToView(this.mTextMax, "128K " + rtot + " ns");
             }
-            if (sizeK[i] == 8192) {
-                postTextToView(mTextTypical, "8M " + rtot + " ns");
+            if (8192 == sizeK[i]) {
+                this.postTextToView(this.mTextTypical, "8M " + rtot + " ns");
             }
 
         }
 
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
+        this.nMemTestEnd(b);
+        this.postTextToView(this.mTextStatus, "Done");
     }
 
     public void runPowerManagement() {
-        mLT.runCommand(mLT.TestPowerManagement);
+        this.mLT.runCommand(LooperThread.TestPowerManagement);
     }
 
     public void runMemoryBandwidth() {
-        mLT.runCommand(mLT.TestMemoryBandwidth);
+        this.mLT.runCommand(LooperThread.TestMemoryBandwidth);
     }
 
     public void runMemoryLatency() {
-        mLT.runCommand(mLT.TestMemoryLatency);
+        this.mLT.runCommand(LooperThread.TestMemoryLatency);
     }
 
     public void runCPUHeatSoak() {
-        mLT.runCommand(mLT.TestHeatSoak);
+        this.mLT.runCommand(LooperThread.TestHeatSoak);
     }
 
     public void runCPUGFlops() {
-        mLT.runCommand(mLT.TestGFlops);
+        this.mLT.runCommand(LooperThread.TestGFlops);
     }
 }

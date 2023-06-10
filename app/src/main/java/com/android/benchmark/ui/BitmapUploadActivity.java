@@ -48,70 +48,70 @@ public class BitmapUploadActivity extends AppCompatActivity {
         private final DisplayMetrics mMetrics = new DisplayMetrics();
         private final Rect mRect = new Rect();
 
-        public UploadView(Context context, AttributeSet attrs) {
+        public UploadView(final Context context, final AttributeSet attrs) {
             super(context, attrs);
         }
 
         @SuppressWarnings("unused")
-        public void setColorValue(int colorValue) {
-            if (colorValue == mColorValue) return;
+        public void setColorValue(final int colorValue) {
+            if (colorValue == this.mColorValue) return;
 
-            mColorValue = colorValue;
+            this.mColorValue = colorValue;
 
             // modify the bitmap's color to ensure it's uploaded to the GPU
-            mBitmap.eraseColor(Color.rgb(mColorValue, 255 - mColorValue, 255));
+            this.mBitmap.eraseColor(Color.rgb(this.mColorValue, 255 - this.mColorValue, 255));
 
-            invalidate();
+            this.invalidate();
         }
 
         @Override
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
 
-            getDisplay().getMetrics(mMetrics);
-            int minDisplayDimen = Math.min(mMetrics.widthPixels, mMetrics.heightPixels);
-            int bitmapSize = Math.min((int) (minDisplayDimen * 0.75), 720);
-            if (mBitmap == null
-                    || mBitmap.getWidth() != bitmapSize
-                    || mBitmap.getHeight() != bitmapSize) {
-                mBitmap = Bitmap.createBitmap(bitmapSize, bitmapSize, Bitmap.Config.ARGB_8888);
+            this.getDisplay().getMetrics(this.mMetrics);
+            final int minDisplayDimen = Math.min(this.mMetrics.widthPixels, this.mMetrics.heightPixels);
+            final int bitmapSize = Math.min((int) (minDisplayDimen * 0.75), 720);
+            if (null == mBitmap
+                    || this.mBitmap.getWidth() != bitmapSize
+                    || this.mBitmap.getHeight() != bitmapSize) {
+                this.mBitmap = Bitmap.createBitmap(bitmapSize, bitmapSize, Bitmap.Config.ARGB_8888);
             }
         }
 
         @Override
-        protected void onDraw(Canvas canvas) {
-            if (mBitmap != null) {
-                mRect.set(0, 0, getWidth(), getHeight());
-                canvas.drawBitmap(mBitmap, null, mRect, null);
+        protected void onDraw(final Canvas canvas) {
+            if (null != mBitmap) {
+                this.mRect.set(0, 0, this.getWidth(), this.getHeight());
+                canvas.drawBitmap(this.mBitmap, null, this.mRect, null);
             }
         }
 
         @Override
-        public boolean onTouchEvent(MotionEvent event) {
+        public boolean onTouchEvent(final MotionEvent event) {
             // animate color to force bitmap uploads
             return super.onTouchEvent(event);
         }
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_bitmap_upload);
+        this.setContentView(R.layout.activity_bitmap_upload);
 
-        final View uploadRoot = findViewById(R.id.upload_root);
+        View uploadRoot = this.findViewById(R.id.upload_root);
         uploadRoot.setKeepScreenOn(true);
         uploadRoot.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                UploadView uploadView = (UploadView) findViewById(R.id.upload_view);
-                ObjectAnimator colorValueAnimator =
+            public boolean onTouch(final View view, final MotionEvent motionEvent) {
+                final UploadView uploadView = BitmapUploadActivity.this.findViewById(R.id.upload_view);
+                final ObjectAnimator colorValueAnimator =
                         ObjectAnimator.ofInt(uploadView, "colorValue", 0, 255);
                 colorValueAnimator.setRepeatMode(ValueAnimator.REVERSE);
                 colorValueAnimator.setRepeatCount(100);
                 colorValueAnimator.start();
 
                 // animate scene root to guarantee there's a minimum amount of GPU rendering work
-                ObjectAnimator yAnimator = ObjectAnimator.ofFloat(
+                final ObjectAnimator yAnimator = ObjectAnimator.ofFloat(
                         view, "translationY", 0, 100);
                 yAnimator.setRepeatMode(ValueAnimator.REVERSE);
                 yAnimator.setRepeatCount(100);
@@ -121,40 +121,40 @@ public class BitmapUploadActivity extends AppCompatActivity {
             }
         });
 
-        final UploadView uploadView = (UploadView) findViewById(R.id.upload_view);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
+        UploadView uploadView = this.findViewById(R.id.upload_view);
+        int runId = this.getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
+        int iteration = this.getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
 
-        String name = BenchmarkRegistry.getBenchmarkName(this, R.id.benchmark_bitmap_upload);
+        final String name = BenchmarkRegistry.getBenchmarkName(this, R.id.benchmark_bitmap_upload);
 
-        mAutomator = new Automator(name, runId, iteration, getWindow(),
+        this.mAutomator = new Automator(name, runId, iteration, this.getWindow(),
                 new Automator.AutomateCallback() {
                     @Override
                     public void onPostAutomate() {
-                        Intent result = new Intent();
-                        setResult(RESULT_OK, result);
-                        finish();
+                        final Intent result = new Intent();
+                        BitmapUploadActivity.this.setResult(Activity.RESULT_OK, result);
+                        BitmapUploadActivity.this.finish();
                     }
 
                     @Override
                     public void onAutomate() {
-                        int[] coordinates = new int[2];
+                        final int[] coordinates = new int[2];
                         uploadRoot.getLocationOnScreen(coordinates);
 
-                        int x = coordinates[0];
-                        int y = coordinates[1];
+                        final int x = coordinates[0];
+                        final int y = coordinates[1];
 
-                        float width = uploadRoot.getWidth();
-                        float height = uploadRoot.getHeight();
+                        final float width = uploadRoot.getWidth();
+                        final float height = uploadRoot.getHeight();
 
-                        float middleX = (x + width) / 5;
-                        float middleY = (y + height) / 5;
+                        final float middleX = (x + width) / 5;
+                        final float middleY = (y + height) / 5;
 
-                        addInteraction(Interaction.newTap(middleX, middleY));
+                        this.addInteraction(Interaction.newTap(middleX, middleY));
                     }
                 });
 
-        mAutomator.start();
+        this.mAutomator.start();
     }
 
 }

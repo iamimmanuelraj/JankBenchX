@@ -39,80 +39,80 @@ public class TextScrollActivity extends ListActivityBase {
     private String mName;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        mHitPercentage = getIntent().getIntExtra(EXTRA_HIT_RATE,
-                mHitPercentage);
+    public void onCreate(final Bundle savedInstanceState) {
+        this.mHitPercentage = this.getIntent().getIntExtra(TextScrollActivity.EXTRA_HIT_RATE,
+                this.mHitPercentage);
         super.onCreate(savedInstanceState);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
-        final int id = getIntent().getIntExtra(BenchmarkRegistry.EXTRA_ID, -1);
+        int runId = this.getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
+        int iteration = this.getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
+        int id = this.getIntent().getIntExtra(BenchmarkRegistry.EXTRA_ID, -1);
 
-        if (id == -1) {
-            finish();
+        if (-1 == id) {
+            this.finish();
             return;
         }
 
-        mName = BenchmarkRegistry.getBenchmarkName(this, id);
+        this.mName = BenchmarkRegistry.getBenchmarkName(this, id);
 
-        mAutomator = new Automator(getName(), runId, iteration, getWindow(),
+        this.mAutomator = new Automator(mName, runId, iteration, this.getWindow(),
                 new Automator.AutomateCallback() {
             @Override
             public void onPostAutomate() {
-                Intent result = new Intent();
-                setResult(RESULT_OK, result);
-                finish();
+                final Intent result = new Intent();
+                TextScrollActivity.this.setResult(Activity.RESULT_OK, result);
+                TextScrollActivity.this.finish();
             }
 
             @Override
             public void onAutomate() {
-                ListView v = (ListView) findViewById(android.R.id.list);
+                final ListView v = TextScrollActivity.this.findViewById(android.R.id.list);
 
-                int[] coordinates = new int[2];
+                final int[] coordinates = new int[2];
                 v.getLocationOnScreen(coordinates);
 
-                int x = coordinates[0];
-                int y = coordinates[1];
+                final int x = coordinates[0];
+                final int y = coordinates[1];
 
-                float width = v.getWidth();
-                float height = v.getHeight();
+                final float width = v.getWidth();
+                final float height = v.getHeight();
 
-                float middleX = (x + width) / 2;
-                float middleY = (y + height) / 2;
+                final float middleX = (x + width) / 2;
+                final float middleY = (y + height) / 2;
 
-                Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
-                Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
+                final Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
+                final Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
 
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
+                this.addInteraction(flingUp);
+                this.addInteraction(flingDown);
+                this.addInteraction(flingUp);
+                this.addInteraction(flingDown);
+                this.addInteraction(flingUp);
+                this.addInteraction(flingDown);
+                this.addInteraction(flingUp);
+                this.addInteraction(flingDown);
             }
         });
 
-        mAutomator.start();
+        this.mAutomator.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mAutomator != null) {
-            mAutomator.cancel();
-            mAutomator = null;
+        if (null != mAutomator) {
+            this.mAutomator.cancel();
+            this.mAutomator = null;
         }
     }
 
     @Override
     protected ListAdapter createListAdapter() {
         return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
-                Utils.buildParagraphListWithHitPercentage(PARAGRAPH_COUNT, 80));
+                Utils.buildParagraphListWithHitPercentage(TextScrollActivity.PARAGRAPH_COUNT, 80));
     }
 
     @Override
     protected String getName() {
-        return mName;
+        return this.mName;
     }
 }

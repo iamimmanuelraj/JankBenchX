@@ -48,18 +48,18 @@ public class UiResultsFragment extends ListFragment {
 
     private ArrayList<UiBenchmarkResult> mResults = new ArrayList<>();
 
-    private AsyncTask<Void, Void, ArrayList<Map<String, String>>> mLoadScoresTask =
+    private final AsyncTask<Void, Void, ArrayList<Map<String, String>>> mLoadScoresTask =
             new AsyncTask<Void, Void, ArrayList<Map<String, String>>>() {
         @Override
-        protected ArrayList<Map<String, String>> doInBackground(Void... voids) {
-            String[] data;
-            if (mResults.size() == 0 || mResults.get(0) == null) {
+        protected ArrayList<Map<String, String>> doInBackground(final Void... voids) {
+            final String[] data;
+            if (0 == mResults.size() || null == mResults.get(0)) {
                 data = new String[] {
                         "No metrics reported", ""
                 };
             } else {
-                data = new String[NUM_FIELDS * (1 + mResults.size()) + 2];
-                SummaryStatistics stats = new SummaryStatistics();
+                data = new String[UiResultsFragment.NUM_FIELDS * (1 + UiResultsFragment.this.mResults.size()) + 2];
+                final SummaryStatistics stats = new SummaryStatistics();
                 int totalFrameCount = 0;
                 double totalAvgFrameDuration = 0;
                 double total99FrameDuration = 0;
@@ -68,76 +68,114 @@ public class UiResultsFragment extends ListFragment {
                 double totalLongestFrame = 0;
                 double totalShortestFrame = 0;
 
-                for (int i = 0; i < mResults.size(); i++) {
-                    int start = (i * NUM_FIELDS) + + NUM_FIELDS;
-                    data[(start++)] = "Iteration";
-                    data[(start++)] = "" + i;
-                    data[(start++)] = "Total Frames";
-                    int currentFrameCount = mResults.get(i).getTotalFrameCount();
+                for (int i = 0; i < UiResultsFragment.this.mResults.size(); i++) {
+                    int start = (i * UiResultsFragment.NUM_FIELDS) + +UiResultsFragment.NUM_FIELDS;
+                    data[(start)] = "Iteration";
+                    start++;
+                    data[(start)] = String.valueOf(i);
+                    start++;
+                    data[(start)] = "Total Frames";
+                    start++;
+                    final int currentFrameCount = UiResultsFragment.this.mResults.get(i).getTotalFrameCount();
                     totalFrameCount += currentFrameCount;
-                    data[(start++)] = Integer.toString(currentFrameCount);
-                    data[(start++)] = "Average frame duration:";
-                    double currentAvgFrameDuration = mResults.get(i).getAverage(FrameMetrics.TOTAL_DURATION);
+                    data[(start)] = Integer.toString(currentFrameCount);
+                    start++;
+                    data[(start)] = "Average frame duration:";
+                    start++;
+                    final double currentAvgFrameDuration = UiResultsFragment.this.mResults.get(i).getAverage(FrameMetrics.TOTAL_DURATION);
                     totalAvgFrameDuration += currentAvgFrameDuration;
-                    data[(start++)] = String.format("%.2f", currentAvgFrameDuration);
-                    data[(start++)] = "Frame duration 99th:";
-                    double current99FrameDuration = mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 99);
+                    data[(start)] = String.format("%.2f", currentAvgFrameDuration);
+                    start++;
+                    data[(start)] = "Frame duration 99th:";
+                    start++;
+                    final double current99FrameDuration = UiResultsFragment.this.mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 99);
                     total99FrameDuration += current99FrameDuration;
-                    data[(start++)] = String.format("%.2f", current99FrameDuration);
-                    data[(start++)] = "Frame duration 95th:";
-                    double current95FrameDuration = mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 95);
+                    data[(start)] = String.format("%.2f", current99FrameDuration);
+                    start++;
+                    data[(start)] = "Frame duration 95th:";
+                    start++;
+                    final double current95FrameDuration = UiResultsFragment.this.mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 95);
                     total95FrameDuration += current95FrameDuration;
-                    data[(start++)] = String.format("%.2f", current95FrameDuration);
-                    data[(start++)] = "Frame duration 90th:";
-                    double current90FrameDuration = mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 90);
+                    data[(start)] = String.format("%.2f", current95FrameDuration);
+                    start++;
+                    data[(start)] = "Frame duration 90th:";
+                    start++;
+                    final double current90FrameDuration = UiResultsFragment.this.mResults.get(i).getPercentile(FrameMetrics.TOTAL_DURATION, 90);
                     total90FrameDuration += current90FrameDuration;
-                    data[(start++)] = String.format("%.2f", current90FrameDuration);
-                    data[(start++)] = "Longest frame:";
-                    double longestFrame = mResults.get(i).getMaximum(FrameMetrics.TOTAL_DURATION);
-                    if (totalLongestFrame == 0 || longestFrame > totalLongestFrame) {
+                    data[(start)] = String.format("%.2f", current90FrameDuration);
+                    start++;
+                    data[(start)] = "Longest frame:";
+                    start++;
+                    final double longestFrame = UiResultsFragment.this.mResults.get(i).getMaximum(FrameMetrics.TOTAL_DURATION);
+                    if (0 == totalLongestFrame || longestFrame > totalLongestFrame) {
                         totalLongestFrame = longestFrame;
                     }
-                    data[(start++)] = String.format("%.2f", longestFrame);
-                    data[(start++)] = "Shortest frame:";
-                    double shortestFrame = mResults.get(i).getMinimum(FrameMetrics.TOTAL_DURATION);
-                    if (totalShortestFrame == 0 || totalShortestFrame > shortestFrame) {
+                    data[(start)] = String.format("%.2f", longestFrame);
+                    start++;
+                    data[(start)] = "Shortest frame:";
+                    start++;
+                    final double shortestFrame = UiResultsFragment.this.mResults.get(i).getMinimum(FrameMetrics.TOTAL_DURATION);
+                    if (0 == totalShortestFrame || totalShortestFrame > shortestFrame) {
                         totalShortestFrame = shortestFrame;
                     }
-                    data[(start++)] = String.format("%.2f", shortestFrame);
-                    data[(start++)] = "Score:";
-                    double score = mResults.get(i).getScore();
+                    data[(start)] = String.format("%.2f", shortestFrame);
+                    start++;
+                    data[(start)] = "Score:";
+                    start++;
+                    final double score = UiResultsFragment.this.mResults.get(i).getScore();
                     stats.addValue(score);
-                    data[(start++)] = String.format("%.2f", score);
-                    data[(start++)] = "==============";
-                    data[(start++)] = "============================";
-                };
+                    data[(start)] = String.format("%.2f", score);
+                    start++;
+                    data[(start)] = "==============";
+                    start++;
+                    data[(start)] = "============================";
+                    start++;
+                }
 
                 int start = 0;
                 data[0] = "Overall: ";
                 data[1] = "";
-                data[(start++)] = "Total Frames";
-                data[(start++)] = Integer.toString(totalFrameCount);
-                data[(start++)] = "Average frame duration:";
-                data[(start++)] = String.format("%.2f", totalAvgFrameDuration / mResults.size());
-                data[(start++)] = "Frame duration 99th:";
-                data[(start++)] = String.format("%.2f", total99FrameDuration / mResults.size());
-                data[(start++)] = "Frame duration 95th:";
-                data[(start++)] = String.format("%.2f", total95FrameDuration / mResults.size());
-                data[(start++)] = "Frame duration 90th:";
-                data[(start++)] = String.format("%.2f", total90FrameDuration / mResults.size());
-                data[(start++)] = "Longest frame:";
-                data[(start++)] = String.format("%.2f", totalLongestFrame);
-                data[(start++)] = "Shortest frame:";
-                data[(start++)] = String.format("%.2f", totalShortestFrame);
-                data[(start++)] = "Score:";
-                data[(start++)] = String.format("%.2f", stats.getGeometricMean());
-                data[(start++)] = "==============";
-                data[(start++)] = "============================";
+                data[(start)] = "Total Frames";
+                start++;
+                data[(start)] = Integer.toString(totalFrameCount);
+                start++;
+                data[(start)] = "Average frame duration:";
+                start++;
+                data[(start)] = String.format("%.2f", totalAvgFrameDuration / UiResultsFragment.this.mResults.size());
+                start++;
+                data[(start)] = "Frame duration 99th:";
+                start++;
+                data[(start)] = String.format("%.2f", total99FrameDuration / UiResultsFragment.this.mResults.size());
+                start++;
+                data[(start)] = "Frame duration 95th:";
+                start++;
+                data[(start)] = String.format("%.2f", total95FrameDuration / UiResultsFragment.this.mResults.size());
+                start++;
+                data[(start)] = "Frame duration 90th:";
+                start++;
+                data[(start)] = String.format("%.2f", total90FrameDuration / UiResultsFragment.this.mResults.size());
+                start++;
+                data[(start)] = "Longest frame:";
+                start++;
+                data[(start)] = String.format("%.2f", totalLongestFrame);
+                start++;
+                data[(start)] = "Shortest frame:";
+                start++;
+                data[(start)] = String.format("%.2f", totalShortestFrame);
+                start++;
+                data[(start)] = "Score:";
+                start++;
+                data[(start)] = String.format("%.2f", stats.getGeometricMean());
+                start++;
+                data[(start)] = "==============";
+                start++;
+                data[(start)] = "============================";
+                start++;
             }
 
-            ArrayList<Map<String, String>> dataMap = new ArrayList<>();
+            final ArrayList<Map<String, String>> dataMap = new ArrayList<>();
             for (int i = 0; i < data.length - 1; i += 2) {
-                HashMap<String, String> map = new HashMap<>();
+                final HashMap<String, String> map = new HashMap<>();
                 map.put("name", data[i]);
                 map.put("value", data[i + 1]);
                 dataMap.add(map);
@@ -147,21 +185,21 @@ public class UiResultsFragment extends ListFragment {
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Map<String, String>> dataMap) {
-            setListAdapter(new SimpleAdapter(getActivity(), dataMap, R.layout.results_list_item,
+        protected void onPostExecute(final ArrayList<Map<String, String>> dataMap) {
+            UiResultsFragment.this.setListAdapter(new SimpleAdapter(UiResultsFragment.this.getActivity(), dataMap, R.layout.results_list_item,
                     new String[] {"name", "value"}, new int[] { R.id.result_name, R.id.result_value }));
-            setListShown(true);
+            UiResultsFragment.this.setListShown(true);
         }
     };
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+    public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        setListShown(false);
-        mLoadScoresTask.execute();
+        this.setListShown(false);
+        this.mLoadScoresTask.execute();
     }
 
-    public void setRunInfo(String name, int runId) {
-        mResults = GlobalResultsStore.getInstance(getActivity()).loadTestResults(name, runId);
+    public void setRunInfo(final String name, final int runId) {
+        this.mResults = GlobalResultsStore.getInstance(this.getActivity()).loadTestResults(name, runId);
     }
 }

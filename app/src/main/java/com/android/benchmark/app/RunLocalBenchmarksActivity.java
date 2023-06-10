@@ -63,9 +63,9 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
     private int mCurrentRunId;
     private boolean mFinish;
 
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
 
-    private static final int[] ALL_TESTS = new int[] {
+    private static final int[] ALL_TESTS = {
             R.id.benchmark_list_view_scroll,
             R.id.benchmark_image_list_view_scroll,
             R.id.benchmark_shadow_grid,
@@ -80,23 +80,23 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         private ArrayList<LocalBenchmark> mBenchmarks;
         private int mRunId;
 
-        public void setBenchmarks(ArrayList<LocalBenchmark> benchmarks) {
-            mBenchmarks = benchmarks;
+        public void setBenchmarks(final ArrayList<LocalBenchmark> benchmarks) {
+            this.mBenchmarks = benchmarks;
         }
 
-        public void setRunId(int id) {
-            mRunId = id;
+        public void setRunId(final int id) {
+            this.mRunId = id;
         }
 
         @Override
-        public void onListItemClick(ListView l, View v, int position, long id) {
-            if (getActivity().findViewById(R.id.list_fragment_container) != null) {
-                FragmentManager fm = getActivity().getSupportFragmentManager();
-                UiResultsFragment resultsView = new UiResultsFragment();
-                String testName = BenchmarkRegistry.getBenchmarkName(v.getContext(),
-                        mBenchmarks.get(position).id);
-                resultsView.setRunInfo(testName, mRunId);
-                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+        public void onListItemClick(final ListView l, final View v, final int position, final long id) {
+            if (null != getActivity().findViewById(R.id.list_fragment_container)) {
+                final FragmentManager fm = this.getActivity().getSupportFragmentManager();
+                final UiResultsFragment resultsView = new UiResultsFragment();
+                final String testName = BenchmarkRegistry.getBenchmarkName(v.getContext(),
+                        this.mBenchmarks.get(position).id);
+                resultsView.setRunInfo(testName, this.mRunId);
+                final FragmentTransaction fragmentTransaction = fm.beginTransaction();
                 fragmentTransaction.replace(R.id.list_fragment_container, resultsView);
                 fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commit();
@@ -107,129 +107,121 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
 
     private class LocalBenchmark {
         int id;
-        int runCount = 0;
-        int totalCount = 0;
+        int runCount;
+        int totalCount;
         ArrayList<String> mResultsUri = new ArrayList<>();
 
-        LocalBenchmark(int id, int runCount) {
+        LocalBenchmark(final int id, final int runCount) {
             this.id = id;
             this.runCount = 0;
-            this.totalCount = runCount;
+            totalCount = runCount;
         }
 
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_running_list);
+        this.setContentView(R.layout.activity_running_list);
 
-        initLocalBenchmarks(getIntent());
+        this.initLocalBenchmarks(this.getIntent());
 
-        if (findViewById(R.id.list_fragment_container) != null) {
-            FragmentManager fm = getSupportFragmentManager();
-            LocalBenchmarksList listView = new LocalBenchmarksList();
+        if (null != findViewById(R.id.list_fragment_container)) {
+            final FragmentManager fm = this.getSupportFragmentManager();
+            final LocalBenchmarksList listView = new LocalBenchmarksList();
             listView.setListAdapter(new LocalBenchmarksListAdapter(LayoutInflater.from(this)));
-            listView.setBenchmarks(mBenchmarksToRun);
-            listView.setRunId(mCurrentRunId);
+            listView.setBenchmarks(this.mBenchmarksToRun);
+            listView.setRunId(this.mCurrentRunId);
             fm.beginTransaction().add(R.id.list_fragment_container, listView).commit();
         }
 
-        TextView scoreView = (TextView) findViewById(R.id.score_text_view);
+        final TextView scoreView = this.findViewById(R.id.score_text_view);
         scoreView.setText("Running tests!");
     }
 
-    private int translateBenchmarkIndex(int index) {
-        if (index >= 0 && index < ALL_TESTS.length) {
-            return ALL_TESTS[index];
+    private int translateBenchmarkIndex(final int index) {
+        if (0 <= index && index < RunLocalBenchmarksActivity.ALL_TESTS.length) {
+            return RunLocalBenchmarksActivity.ALL_TESTS[index];
         }
 
         return -1;
     }
 
-    private void initLocalBenchmarks(Intent intent) {
-        mBenchmarksToRun = new ArrayList<>();
+    private void initLocalBenchmarks(final Intent intent) {
+        this.mBenchmarksToRun = new ArrayList<>();
         int[] enabledIds = intent.getIntArrayExtra(BenchmarkGroup.BENCHMARK_EXTRA_ENABLED_TESTS);
-        int runCount = intent.getIntExtra(BenchmarkGroup.BENCHMARK_EXTRA_RUN_COUNT, RUN_COUNT);
-        mFinish = intent.getBooleanExtra(BenchmarkGroup.BENCHMARK_EXTRA_FINISH, false);
+        final int runCount = intent.getIntExtra(BenchmarkGroup.BENCHMARK_EXTRA_RUN_COUNT, RunLocalBenchmarksActivity.RUN_COUNT);
+        this.mFinish = intent.getBooleanExtra(BenchmarkGroup.BENCHMARK_EXTRA_FINISH, false);
 
-        if (enabledIds == null) {
+        if (null == enabledIds) {
             // run all tests
-            enabledIds = ALL_TESTS;
+            enabledIds = RunLocalBenchmarksActivity.ALL_TESTS;
         }
 
-        StringBuilder idString = new StringBuilder();
+        final StringBuilder idString = new StringBuilder();
         idString.append(runCount);
         idString.append(System.currentTimeMillis());
 
         for (int i = 0; i < enabledIds.length; i++) {
             int id = enabledIds[i];
             System.out.println("considering " + id);
-            if (!isValidBenchmark(id)) {
+            if (!RunLocalBenchmarksActivity.isValidBenchmark(id)) {
                 System.out.println("not valid " + id);
-                id = translateBenchmarkIndex(id);
+                id = this.translateBenchmarkIndex(id);
                 System.out.println("got out " + id);
                 System.out.println("expected: " + R.id.benchmark_overdraw);
             }
 
-            if (isValidBenchmark(id)) {
+            if (RunLocalBenchmarksActivity.isValidBenchmark(id)) {
                 int localRunCount = runCount;
-                if (isCompute(id)) {
+                if (this.isCompute(id)) {
                     localRunCount = 1;
                 }
-                mBenchmarksToRun.add(new LocalBenchmark(id, localRunCount));
+                this.mBenchmarksToRun.add(new LocalBenchmark(id, localRunCount));
                 idString.append(id);
             }
         }
 
-        mBenchmarkCursor = 0;
-        mCurrentRunId = idString.toString().hashCode();
+        this.mBenchmarkCursor = 0;
+        this.mCurrentRunId = idString.toString().hashCode();
     }
 
-    private boolean isCompute(int id) {
-        if (id == R.id.benchmark_cpu_gflops || id == R.id.benchmark_cpu_heat_soak || id == R.id.benchmark_memory_bandwidth || id == R.id.benchmark_memory_latency || id == R.id.benchmark_power_management) {
-            return true;
-        } else {
-            return false;
-        }
+    private boolean isCompute(final int id) {
+        return id == R.id.benchmark_cpu_gflops || id == R.id.benchmark_cpu_heat_soak || id == R.id.benchmark_memory_bandwidth || id == R.id.benchmark_memory_latency || id == R.id.benchmark_power_management;
     }
 
-    private static boolean isValidBenchmark(int benchmarkId) {
-        if (benchmarkId == R.id.benchmark_cpu_gflops || benchmarkId == R.id.benchmark_cpu_heat_soak || benchmarkId == R.id.benchmark_memory_bandwidth || benchmarkId == R.id.benchmark_memory_latency || benchmarkId == R.id.benchmark_power_management) {
-            return true;
-        } else {
-            return false;
-        }
+    private static boolean isValidBenchmark(final int benchmarkId) {
+        return benchmarkId == R.id.benchmark_cpu_gflops || benchmarkId == R.id.benchmark_cpu_heat_soak || benchmarkId == R.id.benchmark_memory_bandwidth || benchmarkId == R.id.benchmark_memory_latency || benchmarkId == R.id.benchmark_power_management;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mHandler.postDelayed(new Runnable() {
+        this.mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                runNextBenchmark();
+                RunLocalBenchmarksActivity.this.runNextBenchmark();
             }
         }, 1000);
     }
 
     private void computeOverallScore() {
-        final TextView scoreView = (TextView) findViewById(R.id.score_text_view);
+        TextView scoreView = this.findViewById(R.id.score_text_view);
         scoreView.setText("Computing score...");
         new AsyncTask<Void, Void, Integer>()  {
             @Override
-            protected Integer doInBackground(Void... voids) {
-                GlobalResultsStore gsr =
+            protected Integer doInBackground(final Void... voids) {
+                final GlobalResultsStore gsr =
                         GlobalResultsStore.getInstance(RunLocalBenchmarksActivity.this);
-                ArrayList<Double> testLevelScores = new ArrayList<>();
-                final SummaryStatistics stats = new SummaryStatistics();
-                for (LocalBenchmark b : mBenchmarksToRun) {
-                    HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults =
-                            gsr.loadDetailedResults(mCurrentRunId);
-                    for (ArrayList<UiBenchmarkResult> testResult : detailedResults.values()) {
-                        for (UiBenchmarkResult res : testResult) {
+                final ArrayList<Double> testLevelScores = new ArrayList<>();
+                SummaryStatistics stats = new SummaryStatistics();
+                for (final LocalBenchmark b : RunLocalBenchmarksActivity.this.mBenchmarksToRun) {
+                    final HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults =
+                            gsr.loadDetailedResults(RunLocalBenchmarksActivity.this.mCurrentRunId);
+                    for (final ArrayList<UiBenchmarkResult> testResult : detailedResults.values()) {
+                        for (final UiBenchmarkResult res : testResult) {
                             int score = res.getScore();
-                            if (score == 0) {
+                            if (0 == score) {
                                 score = 1;
                             }
                             stats.addValue(score);
@@ -241,7 +233,7 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
 
                 }
 
-                for (double score : testLevelScores) {
+                for (final double score : testLevelScores) {
                     stats.addValue(score);
                 }
 
@@ -249,55 +241,56 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
             }
 
             @Override
-            protected void onPostExecute(Integer score) {
-                TextView view = (TextView)
-                        RunLocalBenchmarksActivity.this.findViewById(R.id.score_text_view);
+            protected void onPostExecute(final Integer score) {
+                final TextView view = findViewById(R.id.score_text_view);
                 view.setText("Score: " + score);
             }
         }.execute();
     }
 
     private void runNextBenchmark() {
-        LocalBenchmark benchmark = mBenchmarksToRun.get(mBenchmarkCursor);
-        boolean runAgain = false;
+        LocalBenchmark benchmark = this.mBenchmarksToRun.get(this.mBenchmarkCursor);
+        final boolean runAgain = false;
 
         if (benchmark.runCount < benchmark.totalCount) {
-            runBenchmarkForId(mBenchmarksToRun.get(mBenchmarkCursor).id, benchmark.runCount++);
-        } else if (mBenchmarkCursor + 1 < mBenchmarksToRun.size()) {
-            mBenchmarkCursor++;
-            benchmark = mBenchmarksToRun.get(mBenchmarkCursor);
-            runBenchmarkForId(benchmark.id, benchmark.runCount++);
+            this.runBenchmarkForId(this.mBenchmarksToRun.get(this.mBenchmarkCursor).id, benchmark.runCount);
+            benchmark.runCount++;
+        } else if (this.mBenchmarkCursor + 1 < this.mBenchmarksToRun.size()) {
+            this.mBenchmarkCursor++;
+            benchmark = this.mBenchmarksToRun.get(this.mBenchmarkCursor);
+            this.runBenchmarkForId(benchmark.id, benchmark.runCount);
+            benchmark.runCount++;
         } else if (runAgain) {
-            mBenchmarkCursor = 0;
-            initLocalBenchmarks(getIntent());
+            this.mBenchmarkCursor = 0;
+            this.initLocalBenchmarks(this.getIntent());
 
-            runBenchmarkForId(mBenchmarksToRun.get(mBenchmarkCursor).id, benchmark.runCount);
-        } else if (mFinish) {
-            finish();
+            this.runBenchmarkForId(this.mBenchmarksToRun.get(this.mBenchmarkCursor).id, benchmark.runCount);
+        } else if (this.mFinish) {
+            this.finish();
         } else {
             Log.i("BENCH", "BenchmarkDone!");
-            computeOverallScore();
+            this.computeOverallScore();
 
             new AsyncTask<Void, Void, Void>() {
                 boolean success;
 
                 @Override
-                protected Void doInBackground(Void... voids) {
-                    RunLocalBenchmarksActivity.this.runOnUiThread(new Runnable() {
+                protected Void doInBackground(final Void... voids) {
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Toast.makeText(RunLocalBenchmarksActivity.this, "Uploading results...", Toast.LENGTH_LONG).show();
                         }
                     });
 
-                    success = JankBenchAPI.uploadResults(RunLocalBenchmarksActivity.this, Constants.BASE_URL); 
+                    this.success = JankBenchAPI.uploadResults(RunLocalBenchmarksActivity.this, Constants.BASE_URL);
 
                     return null;
                 }
 
                 @Override
-                protected void onPostExecute(Void aVoid) {
-                    RunLocalBenchmarksActivity.this.runOnUiThread(new Runnable() {
+                protected void onPostExecute(final Void aVoid) {
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Toast.makeText(RunLocalBenchmarksActivity.this, success ? "Upload succeeded" : "Upload failed", Toast.LENGTH_LONG).show();
@@ -308,65 +301,65 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
         }
     }
 
-    private void runBenchmarkForId(int id, int iteration) {
-        Intent intent;
+    private void runBenchmarkForId(final int id, final int iteration) {
+        final Intent intent;
         int syntheticTestId = -1;
 
         System.out.println("iteration: " + iteration);
 
         if (id == R.id.benchmark_list_view_scroll) {
-            intent = new Intent(getApplicationContext(), ListViewScrollActivity.class);
+            intent = new Intent(this.getApplicationContext(), ListViewScrollActivity.class);
         } else if (id == R.id.benchmark_image_list_view_scroll) {
-            intent = new Intent(getApplicationContext(), ImageListViewScrollActivity.class);
+            intent = new Intent(this.getApplicationContext(), ImageListViewScrollActivity.class);
         } else if (id == R.id.benchmark_shadow_grid) {
-            intent = new Intent(getApplicationContext(), ShadowGridActivity.class);
+            intent = new Intent(this.getApplicationContext(), ShadowGridActivity.class);
         } else if (id == R.id.benchmark_text_high_hitrate) {
-            intent = new Intent(getApplicationContext(), TextScrollActivity.class);
+            intent = new Intent(this.getApplicationContext(), TextScrollActivity.class);
             intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 80);
             intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
         } else if (id == R.id.benchmark_text_low_hitrate) {
-            intent = new Intent(getApplicationContext(), TextScrollActivity.class);
+            intent = new Intent(this.getApplicationContext(), TextScrollActivity.class);
             intent.putExtra(TextScrollActivity.EXTRA_HIT_RATE, 20);
             intent.putExtra(BenchmarkRegistry.EXTRA_ID, id);
         } else if (id == R.id.benchmark_edit_text_input) {
-            intent = new Intent(getApplicationContext(), EditTextInputActivity.class);
+            intent = new Intent(this.getApplicationContext(), EditTextInputActivity.class);
         } else if (id == R.id.benchmark_overdraw) {
-            intent = new Intent(getApplicationContext(), FullScreenOverdrawActivity.class);
+            intent = new Intent(this.getApplicationContext(), FullScreenOverdrawActivity.class);
         } else if (id == R.id.benchmark_bitmap_upload) {
-            intent = new Intent(getApplicationContext(), BitmapUploadActivity.class);
+            intent = new Intent(this.getApplicationContext(), BitmapUploadActivity.class);
         } else if (id == R.id.benchmark_memory_bandwidth) {
             syntheticTestId = 0;
-            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent = new Intent(this.getApplicationContext(), MemoryActivity.class);
             intent.putExtra("test", syntheticTestId);
         } else if (id == R.id.benchmark_memory_latency) {
             syntheticTestId = 1;
-            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent = new Intent(this.getApplicationContext(), MemoryActivity.class);
             intent.putExtra("test", syntheticTestId);
         } else if (id == R.id.benchmark_power_management) {
             syntheticTestId = 2;
-            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent = new Intent(this.getApplicationContext(), MemoryActivity.class);
             intent.putExtra("test", syntheticTestId);
         } else if (id == R.id.benchmark_cpu_heat_soak) {
             syntheticTestId = 3;
-            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent = new Intent(this.getApplicationContext(), MemoryActivity.class);
             intent.putExtra("test", syntheticTestId);
         } else if (id == R.id.benchmark_cpu_gflops) {
             syntheticTestId = 4;
-            intent = new Intent(getApplicationContext(), MemoryActivity.class);
+            intent = new Intent(this.getApplicationContext(), MemoryActivity.class);
             intent.putExtra("test", syntheticTestId);
         } else {
             intent = null;
         }
 
-        if (intent != null) {
-            intent.putExtra("com.android.benchmark.RUN_ID", mCurrentRunId);
+        if (null != intent) {
+            intent.putExtra("com.android.benchmark.RUN_ID", this.mCurrentRunId);
             intent.putExtra("com.android.benchmark.ITERATION", iteration);
-            startActivityForResult(intent, id & 0xffff, null);
+            this.startActivityForResult(intent, id & 0xffff, null);
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == R.id.benchmark_shadow_grid || requestCode == R.id.benchmark_list_view_scroll || requestCode == R.id.benchmark_image_list_view_scroll || requestCode == R.id.benchmark_text_high_hitrate || requestCode == R.id.benchmark_text_low_hitrate || requestCode == R.id.benchmark_edit_text_input) {
@@ -380,34 +373,34 @@ public class RunLocalBenchmarksActivity extends AppCompatActivity {
 
         private final LayoutInflater mInflater;
 
-        LocalBenchmarksListAdapter(LayoutInflater inflater) {
-            mInflater = inflater;
+        LocalBenchmarksListAdapter(final LayoutInflater inflater) {
+            this.mInflater = inflater;
         }
 
         @Override
         public int getCount() {
-            return mBenchmarksToRun.size();
+            return RunLocalBenchmarksActivity.this.mBenchmarksToRun.size();
         }
 
         @Override
-        public Object getItem(int i) {
-            return mBenchmarksToRun.get(i);
+        public Object getItem(final int i) {
+            return RunLocalBenchmarksActivity.this.mBenchmarksToRun.get(i);
         }
 
         @Override
-        public long getItemId(int i) {
-            return mBenchmarksToRun.get(i).id;
+        public long getItemId(final int i) {
+            return RunLocalBenchmarksActivity.this.mBenchmarksToRun.get(i).id;
         }
 
         @Override
-        public View getView(int i, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = mInflater.inflate(R.layout.running_benchmark_list_item, null);
+        public View getView(final int i, View convertView, final ViewGroup parent) {
+            if (null == convertView) {
+                convertView = this.mInflater.inflate(R.layout.running_benchmark_list_item, null);
             }
 
-            TextView name = (TextView) convertView.findViewById(R.id.benchmark_name);
+            final TextView name = convertView.findViewById(R.id.benchmark_name);
             name.setText(BenchmarkRegistry.getBenchmarkName(
-                    RunLocalBenchmarksActivity.this, mBenchmarksToRun.get(i).id));
+                    RunLocalBenchmarksActivity.this, RunLocalBenchmarksActivity.this.mBenchmarksToRun.get(i).id));
             return convertView;
         }
 

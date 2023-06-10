@@ -17,16 +17,16 @@ public class JankBenchServiceTest {
 
     @Test
     public void uploadEntry() throws IOException {
-        Retrofit retrofit = new Retrofit.Builder()
+        final Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://127.0.0.1:5000/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        JankBenchService resource = retrofit.create(JankBenchService.class);
-        Entry entry = new Entry();  // TODO: Add data here
+        final JankBenchService resource = retrofit.create(JankBenchService.class);
+        final Entry entry = new Entry();  // TODO: Add data here
 
-        Call<Entry> call = resource.uploadEntry(entry);
-        Response<Entry> response = call.execute();
+        final Call<Entry> call = resource.uploadEntry(entry);
+        final Response<Entry> response = call.execute();
 
         assertTrue(response.isSuccessful());
     }

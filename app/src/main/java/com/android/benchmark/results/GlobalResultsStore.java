@@ -45,22 +45,22 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
 
     private final Context mContext;
 
-    private GlobalResultsStore(Context context) {
-        super(context, "BenchmarkResults", null, VERSION);
-        mContext = context;
+    private GlobalResultsStore(final Context context) {
+        super(context, "BenchmarkResults", null, GlobalResultsStore.VERSION);
+        this.mContext = context;
     }
 
-    public static GlobalResultsStore getInstance(Context context) {
-        if (sInstance == null) {
-            sInstance = new GlobalResultsStore(context.getApplicationContext());
+    public static GlobalResultsStore getInstance(final Context context) {
+        if (null == sInstance) {
+            GlobalResultsStore.sInstance = new GlobalResultsStore(context.getApplicationContext());
         }
 
-        return sInstance;
+        return GlobalResultsStore.sInstance;
     }
 
     @Override
-    public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE " + UI_RESULTS_TABLE + " (" +
+    public void onCreate(final SQLiteDatabase sqLiteDatabase) {
+        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.UI_RESULTS_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " name TEXT," +
                 " run_id INTEGER," +
@@ -78,24 +78,24 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                 " jank_frame BOOLEAN, " +
                 " device_charging INTEGER);");
 
-        sqLiteDatabase.execSQL("CREATE TABLE " + REFRESH_RATE_TABLE + " (" +
+        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.REFRESH_RATE_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " run_id INTEGER," +
                 " refresh_rate INTEGER);");
     }
 
-    public void storeRunResults(String testName, int runId, int iteration,
-                                UiBenchmarkResult result, float refresh_rate) {
-        SQLiteDatabase db = getWritableDatabase();
+    public void storeRunResults(final String testName, final int runId, final int iteration,
+                                final UiBenchmarkResult result, final float refresh_rate) {
+        final SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
 
         try {
-            String date = DateFormat.getDateTimeInstance().format(new Date());
+            final String date = DateFormat.getDateTimeInstance().format(new Date());
             int jankIndexIndex = 0;
-            int[] sortedJankIndices = result.getSortedJankFrameIndices();
-            int totalFrameCount = result.getTotalFrameCount();
+            final int[] sortedJankIndices = result.getSortedJankFrameIndices();
+            final int totalFrameCount = result.getTotalFrameCount();
             for (int frameIdx = 0; frameIdx < totalFrameCount; frameIdx++) {
-                ContentValues cv = new ContentValues();
+                final ContentValues cv = new ContentValues();
                 cv.put("name", testName);
                 cv.put("run_id", runId);
                 cv.put("iteration", iteration);
@@ -125,17 +125,17 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                 } else {
                     cv.put("jank_frame", false);
                 }
-                db.insert(UI_RESULTS_TABLE, null, cv);
+                db.insert(GlobalResultsStore.UI_RESULTS_TABLE, null, cv);
             }
 
             // Store Display Refresh Rate
-            ContentValues cv = new ContentValues();
+            final ContentValues cv = new ContentValues();
             cv.put("run_id", runId);
             cv.put("refresh_rate", Math.round(refresh_rate));
-            db.insert(REFRESH_RATE_TABLE, null, cv);
+            db.insert(GlobalResultsStore.REFRESH_RATE_TABLE, null, cv);
 
             db.setTransactionSuccessful();
-            Toast.makeText(mContext, "Score: " + result.getScore()
+            Toast.makeText(this.mContext, "Score: " + result.getScore()
                     + " Jank: " + (100 * sortedJankIndices.length) / (float) totalFrameCount + "%",
                     Toast.LENGTH_LONG).show();
         } finally {
@@ -144,11 +144,11 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
 
     }
 
-    public ArrayList<UiBenchmarkResult> loadTestResults(String testName, int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        ArrayList<UiBenchmarkResult> resultList = new ArrayList<>();
+    public ArrayList<UiBenchmarkResult> loadTestResults(final String testName, final int runId) {
+        final SQLiteDatabase db = this.getReadableDatabase();
+        final ArrayList<UiBenchmarkResult> resultList = new ArrayList<>();
         try {
-            String[] columnsToQuery = new String[] {
+            final String[] columnsToQuery = {
                     "name",
                     "run_id",
                     "iteration",
@@ -163,14 +163,14 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "total_duration",
             };
 
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?",
+            final Cursor cursor = db.query(
+                    GlobalResultsStore.UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?",
                     new String[] { Integer.toString(runId), testName }, null, null, "iteration");
 
-            double[] values = new double[columnsToQuery.length - 3];
+            final double[] values = new double[columnsToQuery.length - 3];
 
             while (cursor.moveToNext()) {
-                int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
+                final int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
 
                 values[0] = cursor.getDouble(
                         cursor.getColumnIndexOrThrow("unknown_delay"));
@@ -191,9 +191,9 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                 values[8] = cursor.getDouble(
                         cursor.getColumnIndexOrThrow("total_duration"));
 
-                UiBenchmarkResult iterationResult;
+                final UiBenchmarkResult iterationResult;
                 if (resultList.size() == iteration) {
-                    int refresh_rate = loadRefreshRate(runId, db);
+                    final int refresh_rate = this.loadRefreshRate(runId, db);
                     iterationResult = new UiBenchmarkResult(values, refresh_rate);
                     resultList.add(iteration, iterationResult);
                 } else {
@@ -207,19 +207,19 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
             db.close();
         }
 
-        int total = resultList.get(0).getTotalFrameCount();
+        final int total = resultList.get(0).getTotalFrameCount();
         for (int i = 0; i < total; i++) {
-            System.out.println(""+ resultList.get(0).getMetricAtIndex(0, FrameMetrics.TOTAL_DURATION));
+            System.out.println(String.valueOf(resultList.get(0).getMetricAtIndex(0, FrameMetrics.TOTAL_DURATION)));
         }
 
         return resultList;
     }
 
-    public HashMap<String, ArrayList<UiBenchmarkResult>> loadDetailedResults(int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        HashMap<String, ArrayList<UiBenchmarkResult>> results = new HashMap<>();
+    public HashMap<String, ArrayList<UiBenchmarkResult>> loadDetailedResults(final int runId) {
+        final SQLiteDatabase db = this.getReadableDatabase();
+        final HashMap<String, ArrayList<UiBenchmarkResult>> results = new HashMap<>();
         try {
-            String[] columnsToQuery = new String[] {
+            final String[] columnsToQuery = {
                     "name",
                     "run_id",
                     "iteration",
@@ -234,16 +234,16 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "total_duration",
             };
 
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
+            final Cursor cursor = db.query(
+                    GlobalResultsStore.UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
                     new String[] { Integer.toString(runId) }, null, null, "name, iteration");
 
-            double[] values = new double[columnsToQuery.length - 3];
+            final double[] values = new double[columnsToQuery.length - 3];
             while (cursor.moveToNext()) {
-                int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                final int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
+                final String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
                 ArrayList<UiBenchmarkResult> resultList = results.get(name);
-                if (resultList == null) {
+                if (null == resultList) {
                     resultList = new ArrayList<>();
                     results.put(name, resultList);
                 }
@@ -269,9 +269,9 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                 values[8] = cursor.getDouble(
                         cursor.getColumnIndexOrThrow("total_duration"));
 
-                UiBenchmarkResult iterationResult;
+                final UiBenchmarkResult iterationResult;
                 if (resultList.size() == iteration) {
-                    int refresh_rate = loadRefreshRate(runId, db);
+                    final int refresh_rate = this.loadRefreshRate(runId, db);
                     iterationResult = new UiBenchmarkResult(values, refresh_rate);
                     resultList.add(iterationResult);
                 } else {
@@ -290,10 +290,10 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
 
     public int getLastRunId() {
         int runId = 0;
-        SQLiteDatabase db = getReadableDatabase();
+        final SQLiteDatabase db = this.getReadableDatabase();
         try {
-            String query = "SELECT run_id FROM " + UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + UI_RESULTS_TABLE + ")";
-            Cursor cursor = db.rawQuery(query, null);
+            final String query = "SELECT run_id FROM " + GlobalResultsStore.UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + GlobalResultsStore.UI_RESULTS_TABLE + ")";
+            final Cursor cursor = db.rawQuery(query, null);
             if (cursor.moveToFirst()) {
                 runId = cursor.getInt(0);
             }
@@ -305,30 +305,27 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         return runId;
     }
 
-    public int loadRefreshRate(int runId, SQLiteDatabase db) {
+    public int loadRefreshRate(final int runId, final SQLiteDatabase db) {
         int refresh_rate = -1;
 
-        try {
-            String[] columnsToQuery = new String[] {
-                    "run_id",
-                    "refresh_rate"
-            };
-            Cursor cursor = db.query(REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", new String[] { Integer.toString(runId) }, null, null, null);
-            if (cursor.moveToFirst()) {
-                refresh_rate = cursor.getInt((1));
-            }
-            cursor.close();
-        } finally {
+        String[] columnsToQuery = new String[] {
+                "run_id",
+                "refresh_rate"
+        };
+        Cursor cursor = db.query(REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", new String[] { Integer.toString(runId) }, null, null, null);
+        if (cursor.moveToFirst()) {
+            refresh_rate = cursor.getInt((1));
         }
+        cursor.close();
 
         return refresh_rate;
     }
 
-    public HashMap<String, UiBenchmarkResult> loadDetailedAggregatedResults(int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        HashMap<String, UiBenchmarkResult> testsResults = new HashMap<>();
+    public HashMap<String, UiBenchmarkResult> loadDetailedAggregatedResults(final int runId) {
+        final SQLiteDatabase db = this.getReadableDatabase();
+        final HashMap<String, UiBenchmarkResult> testsResults = new HashMap<>();
         try {
-            String[] columnsToQuery = new String[] {
+            final String[] columnsToQuery = {
                     "name",
                     "run_id",
                     "iteration",
@@ -343,13 +340,13 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "total_duration",
             };
 
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
+            final Cursor cursor = db.query(
+                    GlobalResultsStore.UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
                     new String[] { Integer.toString(runId) }, null, null, "name");
 
-            double[] values = new double[columnsToQuery.length - 3];
+            final double[] values = new double[columnsToQuery.length - 3];
             while (cursor.moveToNext()) {
-                String testName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                final String testName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
 
                 values[0] = cursor.getDouble(
                         cursor.getColumnIndexOrThrow("unknown_delay"));
@@ -373,8 +370,8 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                         cursor.getColumnIndexOrThrow("total_duration"));
 
                 UiBenchmarkResult result = testsResults.get(testName);
-                if (result == null) {
-                    int refresh_rate = loadRefreshRate(runId, db);
+                if (null == result) {
+                    final int refresh_rate = this.loadRefreshRate(runId, db);
                     result = new UiBenchmarkResult(values, refresh_rate);
                     testsResults.put(testName, result);
                 } else {
@@ -391,36 +388,36 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
     }
 
     public void exportToCsv() throws IOException {
-        String path = mContext.getFilesDir() + "/results-" + System.currentTimeMillis() + ".csv";
-        SQLiteDatabase db = getReadableDatabase();
+        final String path = this.mContext.getFilesDir() + "/results-" + System.currentTimeMillis() + ".csv";
+        final SQLiteDatabase db = this.getReadableDatabase();
 
         // stats across metrics for each run and each test
-        HashMap<String, DescriptiveStatistics> stats = new HashMap<>();
+        final HashMap<String, DescriptiveStatistics> stats = new HashMap<>();
 
-        Cursor runIdCursor = db.query(
-                UI_RESULTS_TABLE, new String[] { "run_id" }, null, null, "run_id", null, null);
+        final Cursor runIdCursor = db.query(
+                GlobalResultsStore.UI_RESULTS_TABLE, new String[] { "run_id" }, null, null, "run_id", null, null);
 
         while (runIdCursor.moveToNext()) {
 
-            int runId = runIdCursor.getInt(runIdCursor.getColumnIndexOrThrow("run_id"));
-            HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults =
-                    loadDetailedResults(runId);
+            final int runId = runIdCursor.getInt(runIdCursor.getColumnIndexOrThrow("run_id"));
+            final HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults =
+                    this.loadDetailedResults(runId);
 
-            writeRawResults(runId, detailedResults);
+            this.writeRawResults(runId, detailedResults);
 
-            DescriptiveStatistics overall = new DescriptiveStatistics();
-            try (FileWriter writer = new FileWriter(path, true)) {
+            final DescriptiveStatistics overall = new DescriptiveStatistics();
+            try (final FileWriter writer = new FileWriter(path, true)) {
                 writer.write("Run ID, " + runId + "\n");
                 writer.write("Test, Iteration, Score, Jank Penalty, Consistency Bonus, 95th, " +
                         "90th\n");
-                for (String testName : detailedResults.keySet()) {
-                    ArrayList<UiBenchmarkResult> results = detailedResults.get(testName);
-                    DescriptiveStatistics scoreStats = new DescriptiveStatistics();
-                    DescriptiveStatistics jankPenalty = new DescriptiveStatistics();
-                    DescriptiveStatistics consistencyBonus = new DescriptiveStatistics();
+                for (final String testName : detailedResults.keySet()) {
+                    final ArrayList<UiBenchmarkResult> results = detailedResults.get(testName);
+                    final DescriptiveStatistics scoreStats = new DescriptiveStatistics();
+                    final DescriptiveStatistics jankPenalty = new DescriptiveStatistics();
+                    final DescriptiveStatistics consistencyBonus = new DescriptiveStatistics();
                     for (int i = 0; i < results.size(); i++) {
-                        UiBenchmarkResult result = results.get(i);
-                        int score = result.getScore();
+                        final UiBenchmarkResult result = results.get(i);
+                        final int score = result.getScore();
                         scoreStats.addValue(score);
                         overall.addValue(score);
                         jankPenalty.addValue(result.getJankPenalty());
@@ -428,13 +425,13 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
 
                         writer.write(testName);
                         writer.write(",");
-                        writer.write("" + i);
+                        writer.write(String.valueOf(i));
                         writer.write(",");
-                        writer.write("" + score);
+                        writer.write(String.valueOf(score));
                         writer.write(",");
-                        writer.write("" + result.getJankPenalty());
+                        writer.write(String.valueOf(result.getJankPenalty()));
                         writer.write(",");
-                        writer.write("" + result.getConsistencyBonus());
+                        writer.write(String.valueOf(result.getConsistencyBonus()));
                         writer.write(",");
                         writer.write(Double.toString(
                                 result.getPercentile(FrameMetrics.TOTAL_DURATION, 95)));
@@ -465,23 +462,22 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
         runIdCursor.close();
     }
 
-    private void writeRawResults(int runId,
-                                 HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults) {
-        StringBuilder path = new StringBuilder();
-        path.append(mContext.getFilesDir());
-        path.append("/");
-        path.append(Integer.toString(runId));
-        path.append(".csv");
-        try (FileWriter writer = new FileWriter(path.toString())) {
-            for (String test : detailedResults.keySet()) {
+    private void writeRawResults(final int runId,
+                                 final HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults) {
+        String path = this.mContext.getFilesDir() +
+                "/" +
+                runId +
+                ".csv";
+        try (final FileWriter writer = new FileWriter(path)) {
+            for (final String test : detailedResults.keySet()) {
                 writer.write("Test, " + test + "\n");
                 writer.write("iteration, unknown delay, input, animation, layout, draw, sync, " +
                         "command issue, swap buffers\n");
-                ArrayList<UiBenchmarkResult> runs = detailedResults.get(test);
+                final ArrayList<UiBenchmarkResult> runs = detailedResults.get(test);
                 for (int i = 0; i < runs.size(); i++) {
-                    UiBenchmarkResult run = runs.get(i);
+                    final UiBenchmarkResult run = runs.get(i);
                     for (int j = 0; j < run.getTotalFrameCount(); j++) {
-                        writer.write(Integer.toString(i) + "," +
+                        writer.write(i + "," +
                                 run.getMetricAtIndex(j, FrameMetrics.UNKNOWN_DELAY_DURATION) + "," +
                                 run.getMetricAtIndex(j, FrameMetrics.INPUT_HANDLING_DURATION) + "," +
                                 run.getMetricAtIndex(j, FrameMetrics.ANIMATION_DURATION) + "," +
@@ -494,16 +490,16 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int currentVersion) {
-        if (oldVersion < VERSION) {
+    public void onUpgrade(final SQLiteDatabase sqLiteDatabase, final int oldVersion, final int currentVersion) {
+        if (VERSION > oldVersion) {
             sqLiteDatabase.execSQL("ALTER TABLE "
-                    + UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;");
+                    + GlobalResultsStore.UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;");
         }
     }
 }

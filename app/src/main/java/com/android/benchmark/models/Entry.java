@@ -53,136 +53,136 @@ public class Entry {
     private String kernelVersion;
     @SerializedName("results")
     @Expose
-    private List<Result> results = null;
+    private List<Result> results;
     @SerializedName("refresh_rate")
     @Expose
     private Integer refreshRate;
 
     public Integer getRunId() {
-        return runId;
+        return this.runId;
     }
 
-    public void setRunId(Integer runId) {
+    public void setRunId(final Integer runId) {
         this.runId = runId;
     }
 
     public String getBenchmarkVersion() {
-        return benchmarkVersion;
+        return this.benchmarkVersion;
     }
 
-    public void setBenchmarkVersion(String benchmarkVersion) {
+    public void setBenchmarkVersion(final String benchmarkVersion) {
         this.benchmarkVersion = benchmarkVersion;
     }
 
     public String getDeviceName() {
-        return device_name;
+        return this.device_name;
     }
 
-    public void setDeviceName(String device_name) {
+    public void setDeviceName(final String device_name) {
         this.device_name = device_name;
     }
 
     public String getDeviceModel() {
-        return deviceModel;
+        return this.deviceModel;
     }
 
-    public void setDeviceModel(String deviceModel) {
+    public void setDeviceModel(final String deviceModel) {
         this.deviceModel = deviceModel;
     }
 
     public String getDeviceProduct() {
-        return deviceProduct;
+        return this.deviceProduct;
     }
 
-    public void setDeviceProduct(String deviceProduct) {
+    public void setDeviceProduct(final String deviceProduct) {
         this.deviceProduct = deviceProduct;
     }
 
     public String getDeviceBoard() {
-        return deviceBoard;
+        return this.deviceBoard;
     }
 
-    public void setDeviceBoard(String deviceBoard) {
+    public void setDeviceBoard(final String deviceBoard) {
         this.deviceBoard = deviceBoard;
     }
 
     public String getDeviceManufacturer() {
-        return deviceManufacturer;
+        return this.deviceManufacturer;
     }
 
-    public void setDeviceManufacturer(String deviceManufacturer) {
+    public void setDeviceManufacturer(final String deviceManufacturer) {
         this.deviceManufacturer = deviceManufacturer;
     }
 
     public String getDeviceBrand() {
-        return deviceBrand;
+        return this.deviceBrand;
     }
 
-    public void setDeviceBrand(String deviceBrand) {
+    public void setDeviceBrand(final String deviceBrand) {
         this.deviceBrand = deviceBrand;
     }
 
     public String getDeviceHardware() {
-        return deviceHardware;
+        return this.deviceHardware;
     }
 
-    public void setDeviceHardware(String deviceHardware) {
+    public void setDeviceHardware(final String deviceHardware) {
         this.deviceHardware = deviceHardware;
     }
 
     public String getAndroidVersion() {
-        return androidVersion;
+        return this.androidVersion;
     }
 
-    public void setAndroidVersion(String androidVersion) {
+    public void setAndroidVersion(final String androidVersion) {
         this.androidVersion = androidVersion;
     }
 
     public String getBuildType() {
-        return buildType;
+        return this.buildType;
     }
 
-    public void setBuildType(String buildType) {
+    public void setBuildType(final String buildType) {
         this.buildType = buildType;
     }
 
     public String getBuildTime() {
-        return buildTime;
+        return this.buildTime;
     }
 
-    public void setBuildTime(String buildTime) {
+    public void setBuildTime(final String buildTime) {
         this.buildTime = buildTime;
     }
 
     public String getFingerprint() {
-        return fingerprint;
+        return this.fingerprint;
     }
 
-    public void setFingerprint(String fingerprint) {
+    public void setFingerprint(final String fingerprint) {
         this.fingerprint = fingerprint;
     }
 
     public String getKernelVersion() {
-        return kernelVersion;
+        return this.kernelVersion;
     }
 
-    public void setKernelVersion(String kernelVersion) {
+    public void setKernelVersion(final String kernelVersion) {
         this.kernelVersion = kernelVersion;
     }
 
     public List<Result> getResults() {
-        return results;
+        return this.results;
     }
 
-    public void setResults(List<Result> results) {
+    public void setResults(final List<Result> results) {
         this.results = results;
     }
 
     public int getRefreshRate() {
-        return refreshRate;
+        return this.refreshRate;
     }
 
-    public void setRefreshRate(int refreshRate) {
+    public void setRefreshRate(final int refreshRate) {
         this.refreshRate = refreshRate;
     }
 }

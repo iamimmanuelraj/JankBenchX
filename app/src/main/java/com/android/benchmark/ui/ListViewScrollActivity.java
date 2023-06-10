@@ -40,74 +40,74 @@ public class ListViewScrollActivity extends ListActivityBase {
     private Automator mAutomator;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
+        int runId = this.getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
+        int iteration = this.getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setTitle(getTitle());
+        final ActionBar actionBar = this.getSupportActionBar();
+        if (null != actionBar) {
+            actionBar.setTitle(this.getTitle());
         }
 
-        mAutomator = new Automator(getName(), runId, iteration, getWindow(),
+        this.mAutomator = new Automator(this.getName(), runId, iteration, this.getWindow(),
                 new Automator.AutomateCallback() {
             @Override
             public void onPostAutomate() {
-                Intent result = new Intent();
-                setResult(RESULT_OK, result);
-                finish();
+                final Intent result = new Intent();
+                ListViewScrollActivity.this.setResult(Activity.RESULT_OK, result);
+                ListViewScrollActivity.this.finish();
             }
 
             @Override
-            public void onPostInteraction(List<FrameMetrics> metrics) {}
+            public void onPostInteraction(final List<FrameMetrics> metrics) {}
 
             @Override
             public void onAutomate() {
-                FrameLayout v = (FrameLayout) findViewById(R.id.list_fragment_container);
+                final FrameLayout v = ListViewScrollActivity.this.findViewById(R.id.list_fragment_container);
 
-                int[] coordinates = new int[2];
+                final int[] coordinates = new int[2];
                 v.getLocationOnScreen(coordinates);
 
-                int x = coordinates[0];
-                int y = coordinates[1];
+                final int x = coordinates[0];
+                final int y = coordinates[1];
 
-                float width = v.getWidth();
-                float height = v.getHeight();
+                final float width = v.getWidth();
+                final float height = v.getHeight();
 
-                float middleX = (x + width) / 5;
-                float middleY = (y + height) / 5;
+                final float middleX = (x + width) / 5;
+                final float middleY = (y + height) / 5;
 
-                Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
-                Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
+                final Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
+                final Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
 
-                for (int i = 0; i < INTERACTION_COUNT; i++) {
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
+                for (int i = 0; INTERACTION_COUNT > i; i++) {
+                    this.addInteraction(flingUp);
+                    this.addInteraction(flingDown);
                 }
             }
         });
 
-        mAutomator.start();
+        this.mAutomator.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mAutomator != null) {
-            mAutomator.cancel();
-            mAutomator = null;
+        if (null != mAutomator) {
+            this.mAutomator.cancel();
+            this.mAutomator = null;
         }
     }
 
     @Override
     protected ListAdapter createListAdapter() {
         return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
-                Utils.buildStringList(LIST_SIZE));
+                Utils.buildStringList(ListViewScrollActivity.LIST_SIZE));
     }
 
     @Override
     protected String getName() {
-        return getString(R.string.list_view_scroll_name);
+        return this.getString(R.string.list_view_scroll_name);
     }
 }

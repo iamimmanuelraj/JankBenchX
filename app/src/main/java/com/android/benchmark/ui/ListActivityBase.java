@@ -32,19 +32,19 @@ import com.android.benchmark.R;
 public abstract class ListActivityBase extends AppCompatActivity {
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list_fragment);
+        this.setContentView(R.layout.activity_list_fragment);
 
-        ActionBar actionBar = getActionBar();
-        if (actionBar != null) {
-            actionBar.setTitle(getName());
+        final ActionBar actionBar = this.getActionBar();
+        if (null != actionBar) {
+            actionBar.setTitle(this.getName());
         }
 
-        if (findViewById(R.id.list_fragment_container) != null) {
-            FragmentManager fm = getSupportFragmentManager();
-            ListFragment listView = new ListFragment();
-            listView.setListAdapter(createListAdapter());
+        if (null != findViewById(R.id.list_fragment_container)) {
+            final FragmentManager fm = this.getSupportFragmentManager();
+            final ListFragment listView = new ListFragment();
+            listView.setListAdapter(this.createListAdapter());
             fm.beginTransaction().add(R.id.list_fragment_container, listView).commit();
         }
     }

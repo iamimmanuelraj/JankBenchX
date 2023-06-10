@@ -56,19 +56,19 @@ public class Automator extends HandlerThread
 
     public static class AutomateCallback {
         public void onAutomate() {}
-        public void onPostInteraction(List<FrameMetrics> metrics) {}
+        public void onPostInteraction(final List<FrameMetrics> metrics) {}
         public void onPostAutomate() {}
 
-        protected final void addInteraction(Interaction interaction) {
-            if (mInteractions == null) {
+        protected final void addInteraction(final Interaction interaction) {
+            if (null == mInteractions) {
                 return;
             }
 
-            mInteractions.add(interaction);
+            this.mInteractions.add(interaction);
         }
 
-        protected final void setInteractions(List<Interaction> interactions) {
-            mInteractions = interactions;
+        protected final void setInteractions(final List<Interaction> interactions) {
+            this.mInteractions = interactions;
         }
 
         private List<Interaction> mInteractions;
@@ -82,92 +82,92 @@ public class Automator extends HandlerThread
         private final int mRunId;
         private final int mIteration;
 
-        private Instrumentation mInstrumentation;
+        private final Instrumentation mInstrumentation;
         private volatile boolean mCancelled;
-        private CollectorThread mCollectorThread;
-        private AutomateCallback mCallback;
-        private Window mWindow;
+        private final CollectorThread mCollectorThread;
+        private final AutomateCallback mCallback;
+        private final Window mWindow;
 
         LinkedList<Interaction> mInteractions = new LinkedList<>();
         private UiBenchmarkResult mResults;
 
-        AutomatorHandler(Looper looper, Window window, CollectorThread collectorThread,
-                         AutomateCallback callback, String testName, int runId, int iteration) {
+        AutomatorHandler(final Looper looper, final Window window, final CollectorThread collectorThread,
+                         final AutomateCallback callback, final String testName, final int runId, final int iteration) {
             super(looper);
 
-            mInstrumentation = new Instrumentation();
+            this.mInstrumentation = new Instrumentation();
 
-            mCallback = callback;
-            mWindow = window;
-            mCollectorThread = collectorThread;
-            mTestName = testName;
-            mRunId = runId;
-            mIteration = iteration;
+            this.mCallback = callback;
+            this.mWindow = window;
+            this.mCollectorThread = collectorThread;
+            this.mTestName = testName;
+            this.mRunId = runId;
+            this.mIteration = iteration;
         }
 
         @Override
-        public void handleMessage(Message msg) {
-            if (mCancelled) {
+        public void handleMessage(final Message msg) {
+            if (this.mCancelled) {
                 return;
             }
 
-            if (msg.what == MSG_NEXT_INTERACTION) {
-                if (!nextInteraction()) {
-                    stopCollector();
-                    writeResults();
-                    mCallback.onPostAutomate();
+            if (MSG_NEXT_INTERACTION == msg.what) {
+                if (!this.nextInteraction()) {
+                    this.stopCollector();
+                    this.writeResults();
+                    this.mCallback.onPostAutomate();
                 }
-            } else if (msg.what == MSG_ON_AUTOMATE) {
-                mCollectorThread.attachToWindow(mWindow);
-                mCallback.setInteractions(mInteractions);
-                mCallback.onAutomate();
-                postNextInteraction();
-            } else if (msg.what == MSG_ON_POST_INTERACTION) {
-                List<FrameMetrics> collectedStats = (List<FrameMetrics>)msg.obj;
-                persistResults(collectedStats);
-                mCallback.onPostInteraction(collectedStats);
-                postNextInteraction();
+            } else if (MSG_ON_AUTOMATE == msg.what) {
+                this.mCollectorThread.attachToWindow(this.mWindow);
+                this.mCallback.setInteractions(this.mInteractions);
+                this.mCallback.onAutomate();
+                this.postNextInteraction();
+            } else if (MSG_ON_POST_INTERACTION == msg.what) {
+                final List<FrameMetrics> collectedStats = (List<FrameMetrics>)msg.obj;
+                this.persistResults(collectedStats);
+                this.mCallback.onPostInteraction(collectedStats);
+                this.postNextInteraction();
             }
         }
 
         public void cancel() {
-            mCancelled = true;
-            stopCollector();
+            this.mCancelled = true;
+            this.stopCollector();
         }
 
         private void stopCollector() {
-            mCollectorThread.quitCollector();
+            this.mCollectorThread.quitCollector();
         }
 
         private boolean nextInteraction() {
 
-            Interaction interaction = mInteractions.poll();
-            if (interaction != null) {
-                doInteraction(interaction);
+            final Interaction interaction = this.mInteractions.poll();
+            if (null != interaction) {
+                this.doInteraction(interaction);
                 return true;
             }
             return false;
         }
 
-        private void doInteraction(Interaction interaction) {
-            if (mCancelled) {
+        private void doInteraction(final Interaction interaction) {
+            if (this.mCancelled) {
                 return;
             }
 
-            mCollectorThread.markInteractionStart();
+            this.mCollectorThread.markInteractionStart();
 
-            if (interaction.getType() == Interaction.Type.KEY_EVENT) {
-                for (int code : interaction.getKeyCodes()) {
-                    if (!mCancelled) {
-                        mInstrumentation.sendKeyDownUpSync(code);
+            if (Interaction.Type.KEY_EVENT == interaction.getType()) {
+                for (final int code : interaction.getKeyCodes()) {
+                    if (!this.mCancelled) {
+                        this.mInstrumentation.sendKeyDownUpSync(code);
                     } else {
                         break;
                     }
                 }
             } else {
-                for (MotionEvent event : interaction.getEvents()) {
-                    if (!mCancelled) {
-                        mInstrumentation.sendPointerSync(event);
+                for (final MotionEvent event : interaction.getEvents()) {
+                    if (!this.mCancelled) {
+                        this.mInstrumentation.sendPointerSync(event);
                     } else {
                         break;
                     }
@@ -175,102 +175,102 @@ public class Automator extends HandlerThread
             }
         }
 
-        protected void postNextInteraction() {
-            final Message msg = obtainMessage(AutomatorHandler.MSG_NEXT_INTERACTION);
-            sendMessage(msg);
+        private void postNextInteraction() {
+            Message msg = this.obtainMessage(MSG_NEXT_INTERACTION);
+            this.sendMessage(msg);
         }
 
-        private void persistResults(List<FrameMetrics> stats) {
+        private void persistResults(final List<FrameMetrics> stats) {
             if (stats.isEmpty()) {
                 return;
             }
 
-            if (mResults == null) {
-                float refresh_rate = getFrameRate(mWindow.getContext());
-                mResults = new UiBenchmarkResult(stats, (int) refresh_rate);
+            if (null == mResults) {
+                final float refresh_rate = Automator.getFrameRate(this.mWindow.getContext());
+                this.mResults = new UiBenchmarkResult(stats, (int) refresh_rate);
             } else {
-                mResults.update(stats);
+                this.mResults.update(stats);
             }
         }
 
         private void writeResults() {
-            float refresh_rate = getFrameRate(mWindow.getContext());
+            final float refresh_rate = Automator.getFrameRate(this.mWindow.getContext());
 
-            GlobalResultsStore.getInstance(mWindow.getContext())
-                    .storeRunResults(mTestName, mRunId, mIteration, mResults, refresh_rate);
+            GlobalResultsStore.getInstance(this.mWindow.getContext())
+                    .storeRunResults(this.mTestName, this.mRunId, this.mIteration, this.mResults, refresh_rate);
         }
     }
 
-    private static float getFrameRate(Context context) {
-        final DisplayManager displayManager = context.getSystemService(DisplayManager.class);
-        Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+    private static float getFrameRate(final Context context) {
+        DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+        final Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
         return display.getRefreshRate();
     }
 
     private void initHandler() {
-        mHandler = new AutomatorHandler(getLooper(), mWindow, mCollectorThread, mCallback,
-                mTestName, mRunId, mIteration);
-        mWindow = null;
-        mCallback = null;
-        mCollectorThread = null;
-        mTestName = null;
-        mRunId = 0;
-        mIteration = 0;
+        this.mHandler = new AutomatorHandler(this.getLooper(), this.mWindow, this.mCollectorThread, this.mCallback,
+                this.mTestName, this.mRunId, this.mIteration);
+        this.mWindow = null;
+        this.mCallback = null;
+        this.mCollectorThread = null;
+        this.mTestName = null;
+        this.mRunId = 0;
+        this.mIteration = 0;
     }
 
     @Override
     public final void onGlobalLayout() {
-        if (!mCollectorThread.isAlive()) {
-            mCollectorThread.start();
-            mWindow.getDecorView().getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            mReadyState.decrementAndGet();
+        if (!this.mCollectorThread.isAlive()) {
+            this.mCollectorThread.start();
+            this.mWindow.getDecorView().getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            this.mReadyState.decrementAndGet();
         }
     }
 
     @Override
     public void onCollectorThreadReady() {
-        if (mReadyState.decrementAndGet() == 0) {
-            initHandler();
-            postOnAutomate();
+        if (0 == mReadyState.decrementAndGet()) {
+            this.initHandler();
+            this.postOnAutomate();
         }
     }
 
     @Override
     protected void onLooperPrepared() {
-        if (mReadyState.decrementAndGet() == 0) {
-            initHandler();
-            postOnAutomate();
+        if (0 == mReadyState.decrementAndGet()) {
+            this.initHandler();
+            this.postOnAutomate();
         }
     }
 
     @Override
-    public void onPostInteraction(List<FrameMetrics> stats) {
-        Message m = mHandler.obtainMessage(AutomatorHandler.MSG_ON_POST_INTERACTION, stats);
-        mHandler.sendMessage(m);
+    public void onPostInteraction(final List<FrameMetrics> stats) {
+        final Message m = this.mHandler.obtainMessage(AutomatorHandler.MSG_ON_POST_INTERACTION, stats);
+        this.mHandler.sendMessage(m);
     }
 
     protected void postOnAutomate() {
-        final Message msg = mHandler.obtainMessage(AutomatorHandler.MSG_ON_AUTOMATE);
-        mHandler.sendMessage(msg);
+        Message msg = this.mHandler.obtainMessage(AutomatorHandler.MSG_ON_AUTOMATE);
+        this.mHandler.sendMessage(msg);
     }
 
     public void cancel() {
-        mHandler.removeMessages(AutomatorHandler.MSG_NEXT_INTERACTION);
-        mHandler.cancel();
-        mHandler = null;
+        this.mHandler.removeMessages(AutomatorHandler.MSG_NEXT_INTERACTION);
+        this.mHandler.cancel();
+        this.mHandler = null;
     }
 
-    public Automator(String testName, int runId, int iteration,
-                     Window window, AutomateCallback callback) {
+    public Automator(final String testName, final int runId, final int iteration,
+                     final Window window, final AutomateCallback callback) {
         super("AutomatorThread");
 
-        mTestName = testName;
-        mRunId = runId;
-        mIteration = iteration;
-        mCallback = callback;
-        mWindow = window;
-        mWindow.getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(this);
-        mCollectorThread = new CollectorThread(this);
-        mReadyState = new AtomicInteger(PRE_READY_STATE_COUNT);
+        this.mTestName = testName;
+        this.mRunId = runId;
+        this.mIteration = iteration;
+        this.mCallback = callback;
+        this.mWindow = window;
+        this.mWindow.getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(this);
+        this.mCollectorThread = new CollectorThread(this);
+        this.mReadyState = new AtomicInteger(Automator.PRE_READY_STATE_COUNT);
     }
 }

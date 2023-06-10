@@ -30,20 +30,20 @@ import java.util.List;
  */
 @TargetApi(24)
 public class UiBenchmarkResult {
-    private int BASE_SCORE = 100;
-    private int CONSISTENCY_BONUS_MAX = 100;
+    private final int BASE_SCORE = 100;
+    private final int CONSISTENCY_BONUS_MAX = 100;
 
     private int FRAME_PERIOD_MS = 16;
-    private int ZERO_SCORE_TOTAL_DURATION_MS = 2 * FRAME_PERIOD_MS;
-    private int JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * FRAME_PERIOD_MS);
+    private int ZERO_SCORE_TOTAL_DURATION_MS = 2 * this.FRAME_PERIOD_MS;
+    private int JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * this.FRAME_PERIOD_MS);
     private int ZERO_SCORE_ABOVE_THRESHOLD_MS =
-            ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS;
+            this.ZERO_SCORE_TOTAL_DURATION_MS - this.JANK_PENALTY_THRESHOLD_MS;
     private double JANK_PENALTY_PER_MS_ABOVE_THRESHOLD =
-            BASE_SCORE / (double)ZERO_SCORE_ABOVE_THRESHOLD_MS;
+            this.BASE_SCORE / (double) this.ZERO_SCORE_ABOVE_THRESHOLD_MS;
 
     private static final int METRIC_WAS_JANKY = -1;
 
-    private static final int[] METRICS = new int[] {
+    private static final int[] METRICS = {
             FrameMetrics.UNKNOWN_DELAY_DURATION,
             FrameMetrics.INPUT_HANDLING_DURATION,
             FrameMetrics.ANIMATION_DURATION,
@@ -57,53 +57,53 @@ public class UiBenchmarkResult {
 
     private final DescriptiveStatistics[] mStoredStatistics;
 
-    public UiBenchmarkResult(List<FrameMetrics> instances, int refresh_rate) {
-        initializeThresholds(refresh_rate);
-        mStoredStatistics = new DescriptiveStatistics[METRICS.length];
-        insertMetrics(instances);
+    public UiBenchmarkResult(final List<FrameMetrics> instances, final int refresh_rate) {
+        this.initializeThresholds(refresh_rate);
+        this.mStoredStatistics = new DescriptiveStatistics[UiBenchmarkResult.METRICS.length];
+        this.insertMetrics(instances);
     }
 
-    public UiBenchmarkResult(double[] values, int refresh_rate) {
-        initializeThresholds(refresh_rate);
-        mStoredStatistics = new DescriptiveStatistics[METRICS.length];
-        insertValues(values);
+    public UiBenchmarkResult(final double[] values, final int refresh_rate) {
+        this.initializeThresholds(refresh_rate);
+        this.mStoredStatistics = new DescriptiveStatistics[UiBenchmarkResult.METRICS.length];
+        this.insertValues(values);
     }
 
     // Dynamically set threshold values based on display refresh rate
-    private void initializeThresholds(int refresh_rate) {
-        FRAME_PERIOD_MS = Math.floorDiv(1000, refresh_rate);
-        ZERO_SCORE_TOTAL_DURATION_MS = FRAME_PERIOD_MS * 2;
-        JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * FRAME_PERIOD_MS);
-        ZERO_SCORE_ABOVE_THRESHOLD_MS = ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS;
-        JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = BASE_SCORE / (double)ZERO_SCORE_ABOVE_THRESHOLD_MS;
+    private void initializeThresholds(final int refresh_rate) {
+        this.FRAME_PERIOD_MS = Math.floorDiv(1000, refresh_rate);
+        this.ZERO_SCORE_TOTAL_DURATION_MS = this.FRAME_PERIOD_MS * 2;
+        this.JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * this.FRAME_PERIOD_MS);
+        this.ZERO_SCORE_ABOVE_THRESHOLD_MS = this.ZERO_SCORE_TOTAL_DURATION_MS - this.JANK_PENALTY_THRESHOLD_MS;
+        this.JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = this.BASE_SCORE / (double) this.ZERO_SCORE_ABOVE_THRESHOLD_MS;
     }
 
-    public void update(List<FrameMetrics> instances) {
-        insertMetrics(instances);
+    public void update(final List<FrameMetrics> instances) {
+        this.insertMetrics(instances);
     }
 
-    public void update(double[] values) {
-        insertValues(values);
+    public void update(final double[] values) {
+        this.insertValues(values);
     }
 
-    public double getAverage(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMean();
+    public double getAverage(final int id) {
+        final int pos = this.getMetricPosition(id);
+        return this.mStoredStatistics[pos].getMean();
     }
 
-    public double getMinimum(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMin();
+    public double getMinimum(final int id) {
+        final int pos = this.getMetricPosition(id);
+        return this.mStoredStatistics[pos].getMin();
     }
 
-    public double getMaximum(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMax();
+    public double getMaximum(final int id) {
+        final int pos = this.getMetricPosition(id);
+        return this.mStoredStatistics[pos].getMax();
     }
 
-    public int getMaximumIndex(int id) {
-        int pos = getMetricPosition(id);
-        double[] storedMetrics = mStoredStatistics[pos].getValues();
+    public int getMaximumIndex(final int id) {
+        final int pos = this.getMetricPosition(id);
+        final double[] storedMetrics = this.mStoredStatistics[pos].getValues();
         int maxIdx = 0;
         for (int i = 0; i < storedMetrics.length; i++) {
             if (storedMetrics[i] >= storedMetrics[maxIdx]) {
@@ -114,39 +114,39 @@ public class UiBenchmarkResult {
         return maxIdx;
     }
 
-    public double getMetricAtIndex(int index, int metricId) {
-        return mStoredStatistics[getMetricPosition(metricId)].getElement(index);
+    public double getMetricAtIndex(final int index, final int metricId) {
+        return this.mStoredStatistics[this.getMetricPosition(metricId)].getElement(index);
     }
 
-    public double getPercentile(int id, int percentile) {
-        if (percentile > 100) percentile = 100;
-        if (percentile < 0) percentile = 0;
+    public double getPercentile(final int id, int percentile) {
+        if (100 < percentile) percentile = 100;
+        if (0 > percentile) percentile = 0;
 
-        int metricPos = getMetricPosition(id);
-        return mStoredStatistics[metricPos].getPercentile(percentile);
+        final int metricPos = this.getMetricPosition(id);
+        return this.mStoredStatistics[metricPos].getPercentile(percentile);
     }
 
     public int getTotalFrameCount() {
-        if (mStoredStatistics.length == 0) {
+        if (0 == mStoredStatistics.length) {
             return 0;
         }
 
-        return (int) mStoredStatistics[0].getN();
+        return (int) this.mStoredStatistics[0].getN();
     }
 
     public int getScore() {
-        SummaryStatistics badFramesStats = new SummaryStatistics();
+        final SummaryStatistics badFramesStats = new SummaryStatistics();
 
-        int totalFrameCount = getTotalFrameCount();
+        final int totalFrameCount = this.getTotalFrameCount();
         for (int i = 0; i < totalFrameCount; i++) {
-            double totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
-            if (totalDuration >= JANK_PENALTY_THRESHOLD_MS) {
+            final double totalDuration = this.getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
+            if (totalDuration >= this.JANK_PENALTY_THRESHOLD_MS) {
                 badFramesStats.addValue(totalDuration);
             }
         }
 
-        int length = getSortedJankFrameIndices().length;
-        double jankFrameCount = 100 * length / (double) totalFrameCount;
+        final int length = this.getSortedJankFrameIndices().length;
+        final double jankFrameCount = 100 * length / (double) totalFrameCount;
 
         System.out.println("Mean: " + badFramesStats.getMean() + " JankP: " + jankFrameCount
                 + " StdDev: " + badFramesStats.getStandardDeviation() +
@@ -157,15 +157,15 @@ public class UiBenchmarkResult {
     }
 
     public int getNumJankFrames() {
-        return getSortedJankFrameIndices().length;
+        return this.getSortedJankFrameIndices().length;
     }
 
     public int getNumBadFrames() {
         int num_bad_frames = 0;
-        int totalFrameCount = getTotalFrameCount();
+        final int totalFrameCount = this.getTotalFrameCount();
         for (int i = 0; i < totalFrameCount; i++) {
-            double totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
-            if (totalDuration >= JANK_PENALTY_THRESHOLD_MS) {
+            final double totalDuration = this.getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
+            if (totalDuration >= this.JANK_PENALTY_THRESHOLD_MS) {
                 num_bad_frames++;
             }
         }
@@ -175,67 +175,68 @@ public class UiBenchmarkResult {
 
 
     public int getJankPenalty() {
-        double total95th = mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)]
+        final double total95th = this.mStoredStatistics[this.getMetricPosition(FrameMetrics.TOTAL_DURATION)]
                 .getPercentile(95);
         System.out.println("95: " + total95th);
-        double aboveThreshold = total95th - JANK_PENALTY_THRESHOLD_MS;
-        if (aboveThreshold <= 0) {
+        final double aboveThreshold = total95th - this.JANK_PENALTY_THRESHOLD_MS;
+        if (0 >= aboveThreshold) {
             return 0;
         }
 
-        if (aboveThreshold > ZERO_SCORE_ABOVE_THRESHOLD_MS) {
-            return BASE_SCORE;
+        if (aboveThreshold > this.ZERO_SCORE_ABOVE_THRESHOLD_MS) {
+            return this.BASE_SCORE;
         }
 
-        return (int) Math.ceil(JANK_PENALTY_PER_MS_ABOVE_THRESHOLD * aboveThreshold);
+        return (int) Math.ceil(this.JANK_PENALTY_PER_MS_ABOVE_THRESHOLD * aboveThreshold);
     }
 
     public int getConsistencyBonus() {
-        DescriptiveStatistics totalDurationStats =
-                mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)];
+        final DescriptiveStatistics totalDurationStats =
+                this.mStoredStatistics[this.getMetricPosition(FrameMetrics.TOTAL_DURATION)];
 
-        double standardDeviation = totalDurationStats.getStandardDeviation();
-        if (standardDeviation == 0) {
-            return CONSISTENCY_BONUS_MAX;
+        final double standardDeviation = totalDurationStats.getStandardDeviation();
+        if (0 == standardDeviation) {
+            return this.CONSISTENCY_BONUS_MAX;
         }
 
         // 1 / CV of the total duration.
-        double bonus = totalDurationStats.getMean() / standardDeviation;
-        return (int) Math.min(Math.round(bonus), CONSISTENCY_BONUS_MAX);
+        final double bonus = totalDurationStats.getMean() / standardDeviation;
+        return (int) Math.min(Math.round(bonus), this.CONSISTENCY_BONUS_MAX);
     }
 
     public int[] getSortedJankFrameIndices() {
-        ArrayList<Integer> jankFrameIndices = new ArrayList<>();
+        final ArrayList<Integer> jankFrameIndices = new ArrayList<>();
         boolean tripleBuffered = false;
-        int totalFrameCount = getTotalFrameCount();
-        int totalDurationPos = getMetricPosition(FrameMetrics.TOTAL_DURATION);
+        final int totalFrameCount = this.getTotalFrameCount();
+        final int totalDurationPos = this.getMetricPosition(FrameMetrics.TOTAL_DURATION);
 
         for (int i = 0; i < totalFrameCount; i++) {
-            double thisDuration = mStoredStatistics[totalDurationPos].getElement(i);
+            final double thisDuration = this.mStoredStatistics[totalDurationPos].getElement(i);
             if (!tripleBuffered) {
-                if (thisDuration > FRAME_PERIOD_MS) {
+                if (thisDuration > this.FRAME_PERIOD_MS) {
                     tripleBuffered = true;
                     jankFrameIndices.add(i);
                 }
             } else {
-                if (thisDuration > 2 * FRAME_PERIOD_MS) {
+                if (thisDuration > 2 * this.FRAME_PERIOD_MS) {
                     tripleBuffered = false;
                     jankFrameIndices.add(i);
                 }
             }
         }
 
-        int[] res = new int[jankFrameIndices.size()];
+        final int[] res = new int[jankFrameIndices.size()];
         int i = 0;
-        for (Integer index : jankFrameIndices) {
-            res[i++] = index;
+        for (final Integer index : jankFrameIndices) {
+            res[i] = index;
+            i++;
         }
         return res;
     }
 
-    private int getMetricPosition(int id) {
-        for (int i = 0; i < METRICS.length; i++) {
-            if (id == METRICS[i]) {
+    private int getMetricPosition(final int id) {
+        for (int i = 0; i < UiBenchmarkResult.METRICS.length; i++) {
+            if (id == UiBenchmarkResult.METRICS[i]) {
                 return i;
             }
         }
@@ -243,33 +244,33 @@ public class UiBenchmarkResult {
         return -1;
     }
 
-    private void insertMetrics(List<FrameMetrics> instances) {
-        for (FrameMetrics frame : instances) {
-            for (int i = 0; i < METRICS.length; i++) {
-                DescriptiveStatistics stats = mStoredStatistics[i];
-                if (stats == null) {
+    private void insertMetrics(final List<FrameMetrics> instances) {
+        for (final FrameMetrics frame : instances) {
+            for (int i = 0; i < UiBenchmarkResult.METRICS.length; i++) {
+                DescriptiveStatistics stats = this.mStoredStatistics[i];
+                if (null == stats) {
                     stats = new DescriptiveStatistics();
-                    mStoredStatistics[i] = stats;
+                    this.mStoredStatistics[i] = stats;
                 }
 
-                mStoredStatistics[i].addValue(frame.getMetric(METRICS[i]) / (double) 1000000);
+                this.mStoredStatistics[i].addValue(frame.getMetric(UiBenchmarkResult.METRICS[i]) / (double) 1000000);
             }
         }
     }
 
-    private void insertValues(double[] values) {
-        if (values.length != METRICS.length) {
+    private void insertValues(final double[] values) {
+        if (values.length != UiBenchmarkResult.METRICS.length) {
             throw new IllegalArgumentException("invalid values array");
         }
 
         for (int i = 0; i < values.length; i++) {
-            DescriptiveStatistics stats = mStoredStatistics[i];
-            if (stats == null) {
+            DescriptiveStatistics stats = this.mStoredStatistics[i];
+            if (null == stats) {
                 stats = new DescriptiveStatistics();
-                mStoredStatistics[i] = stats;
+                this.mStoredStatistics[i] = stats;
             }
 
-            mStoredStatistics[i].addValue(values[i]);
+            this.mStoredStatistics[i].addValue(values[i]);
         }
     }
  }

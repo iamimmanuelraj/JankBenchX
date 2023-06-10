@@ -32,12 +32,13 @@ public class BenchmarkGroup {
             "com.android.benchmark.EXTRA_RUN_COUNT";
     public static final String BENCHMARK_EXTRA_FINISH = "com.android.benchmark.FINISH_WHEN_DONE";
 
-    public static class Benchmark implements CheckBox.OnClickListener {
+    public static class Benchmark implements View.OnClickListener {
         /** The name of this individual benchmark test */
         private final String mName;
 
         /** The category of this individual benchmark test */
-        private final @BenchmarkCategory int mCategory;
+        @BenchmarkCategory
+        private final int mCategory;
 
         /** Human-readable description of the benchmark */
         private final String mDescription;
@@ -46,29 +47,31 @@ public class BenchmarkGroup {
 
         private boolean mEnabled;
 
-        Benchmark(int id, String name, @BenchmarkCategory int category, String description) {
-            mId = id;
-            mName = name;
-            mCategory = category;
-            mDescription = description;
-            mEnabled = true;
+        Benchmark(final int id, final String name, @BenchmarkCategory final int category, final String description) {
+            this.mId = id;
+            this.mName = name;
+            this.mCategory = category;
+            this.mDescription = description;
+            this.mEnabled = true;
         }
 
-        public boolean isEnabled() { return mEnabled; }
+        public boolean isEnabled() { return this.mEnabled; }
 
-        public void setEnabled(boolean enabled) { mEnabled = enabled; }
+        public void setEnabled(final boolean enabled) {
+            this.mEnabled = enabled; }
 
-        public int getId() { return mId; }
+        public int getId() { return this.mId; }
 
-        public String getDescription() { return mDescription; }
+        public String getDescription() { return this.mDescription; }
 
-        public @BenchmarkCategory int getCategory() { return mCategory; }
+        @BenchmarkCategory
+        public int getCategory() { return this.mCategory; }
 
-        public String getName() { return mName; }
+        public String getName() { return this.mName; }
 
         @Override
-        public void onClick(View view) {
-            setEnabled(((CheckBox)view).isChecked());
+        public void onClick(final View view) {
+            mEnabled = ((CheckBox) view).isChecked();
         }
     }
 
@@ -95,54 +98,55 @@ public class BenchmarkGroup {
     /** Human-readable description of the benchmark group */
     private final String mDescription;
 
-    BenchmarkGroup(ComponentName componentName, String title,
-                   String description, Benchmark[] benchmarks, Intent intent) {
-        mComponentName = componentName;
-        mTitle = title;
-        mBenchmarks = benchmarks;
-        mDescription = description;
-        mIntent = intent;
+    BenchmarkGroup(final ComponentName componentName, final String title,
+                   final String description, final Benchmark[] benchmarks, final Intent intent) {
+        this.mComponentName = componentName;
+        this.mTitle = title;
+        this.mBenchmarks = benchmarks;
+        this.mDescription = description;
+        this.mIntent = intent;
     }
 
     public Intent getIntent() {
-        int[] enabledBenchmarksIds = getEnabledBenchmarksIds();
-        if (enabledBenchmarksIds.length != 0) {
-            mIntent.putExtra(BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds);
-            return mIntent;
+        final int[] enabledBenchmarksIds = this.getEnabledBenchmarksIds();
+        if (0 != enabledBenchmarksIds.length) {
+            this.mIntent.putExtra(BenchmarkGroup.BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds);
+            return this.mIntent;
         }
 
         return null;
     }
 
     public ComponentName getComponentName() {
-        return mComponentName;
+        return this.mComponentName;
     }
 
     public String getTitle() {
-        return mTitle;
+        return this.mTitle;
     }
 
     public Benchmark[] getBenchmarks() {
-        return mBenchmarks;
+        return this.mBenchmarks;
     }
 
     public String getDescription() {
-        return mDescription;
+        return this.mDescription;
     }
 
     private int[] getEnabledBenchmarksIds() {
         int enabledBenchmarkCount = 0;
-        for (int i = 0; i < mBenchmarks.length; i++) {
-            if (mBenchmarks[i].isEnabled()) {
+        for (int i = 0; i < this.mBenchmarks.length; i++) {
+            if (this.mBenchmarks[i].isEnabled()) {
                 enabledBenchmarkCount++;
             }
         }
 
         int writeIndex = 0;
-        int[] enabledBenchmarks = new int[enabledBenchmarkCount];
-        for (int i = 0; i < mBenchmarks.length; i++) {
-            if (mBenchmarks[i].isEnabled()) {
-                enabledBenchmarks[writeIndex++] = mBenchmarks[i].getId();
+        final int[] enabledBenchmarks = new int[enabledBenchmarkCount];
+        for (int i = 0; i < this.mBenchmarks.length; i++) {
+            if (this.mBenchmarks[i].isEnabled()) {
+                enabledBenchmarks[writeIndex] = this.mBenchmarks[i].getId();
+                writeIndex++;
             }
         }
 
