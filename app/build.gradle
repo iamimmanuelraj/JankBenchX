@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     namespace 'com.android.benchmark'
@@ -33,6 +34,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.core:core-ktx:+'
     testImplementation 'junit:junit:4.12'
 
     implementation 'androidx.cardview:cardview:1.0.0'
