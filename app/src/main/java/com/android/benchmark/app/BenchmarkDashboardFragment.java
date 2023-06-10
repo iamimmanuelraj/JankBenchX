@@ -34,8 +34,8 @@ public class BenchmarkDashboardFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container,
-                             final Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_dashboard, container, false);
     }
 }

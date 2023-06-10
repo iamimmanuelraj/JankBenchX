@@ -39,31 +39,31 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
     private final LayoutInflater mInflater;
     private final BenchmarkRegistry mRegistry;
 
-    BenchmarkListAdapter(final LayoutInflater inflater,
-                         final BenchmarkRegistry registry) {
-        this.mInflater = inflater;
-        this.mRegistry = registry;
+    BenchmarkListAdapter(LayoutInflater inflater,
+                         BenchmarkRegistry registry) {
+        mInflater = inflater;
+        mRegistry = registry;
     }
 
     @Override
     public int getGroupCount() {
-        return this.mRegistry.getGroupCount();
+        return mRegistry.getGroupCount();
     }
 
     @Override
-    public int getChildrenCount(final int groupPosition) {
-        return this.mRegistry.getBenchmarkCount(groupPosition);
+    public int getChildrenCount(int groupPosition) {
+        return mRegistry.getBenchmarkCount(groupPosition);
     }
 
     @Override
-    public Object getGroup(final int groupPosition) {
-        return this.mRegistry.getBenchmarkGroup(groupPosition);
+    public Object getGroup(int groupPosition) {
+        return mRegistry.getBenchmarkGroup(groupPosition);
     }
 
     @Nullable
     @Override
-    public Object getChild(final int groupPosition, final int childPosition) {
-        final BenchmarkGroup benchmarkGroup = this.mRegistry.getBenchmarkGroup(groupPosition);
+    public Object getChild(int groupPosition, int childPosition) {
+        BenchmarkGroup benchmarkGroup = mRegistry.getBenchmarkGroup(groupPosition);
 
         if (null != benchmarkGroup) {
            return benchmarkGroup.getBenchmarks()[childPosition];
@@ -73,12 +73,12 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public long getGroupId(final int groupPosition) {
+    public long getGroupId(int groupPosition) {
         return groupPosition;
     }
 
     @Override
-    public long getChildId(final int groupPosition, final int childPosition) {
+    public long getChildId(int groupPosition, int childPosition) {
         return childPosition;
     }
 
@@ -89,13 +89,13 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
 
     @NonNull
     @Override
-    public View getGroupView(final int groupPosition, final boolean isExpanded, @Nullable View convertView, final ViewGroup parent) {
-        final BenchmarkGroup group = (BenchmarkGroup) this.getGroup(groupPosition);
+    public View getGroupView(int groupPosition, boolean isExpanded, @Nullable View convertView, ViewGroup parent) {
+        BenchmarkGroup group = (BenchmarkGroup) getGroup(groupPosition);
         if (null == convertView) {
-            convertView = this.mInflater.inflate(R.layout.benchmark_list_group_row, null);
+            convertView = mInflater.inflate(R.layout.benchmark_list_group_row, null);
         }
 
-        final TextView title = convertView.findViewById(R.id.group_name);
+        TextView title = convertView.findViewById(R.id.group_name);
         title.setTypeface(null, Typeface.BOLD);
         title.setText(group.getTitle());
         return convertView;
@@ -103,17 +103,17 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
 
     @NonNull
     @Override
-    public View getChildView(final int groupPosition, final int childPosition, final boolean isLastChild,
-                             @Nullable View convertView, final ViewGroup parent) {
-        final BenchmarkGroup.Benchmark benchmark =
-                (BenchmarkGroup.Benchmark) this.getChild(groupPosition, childPosition);
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
+                             @Nullable View convertView, ViewGroup parent) {
+        BenchmarkGroup.Benchmark benchmark =
+                (BenchmarkGroup.Benchmark) getChild(groupPosition, childPosition);
         if (null == convertView) {
-            convertView = this.mInflater.inflate(R.layout.benchmark_list_item, null);
+            convertView = mInflater.inflate(R.layout.benchmark_list_item, null);
         }
 
-        final TextView name = convertView.findViewById(R.id.benchmark_name);
+        TextView name = convertView.findViewById(R.id.benchmark_name);
         name.setText(benchmark.getName());
-        final CheckBox enabledBox = convertView.findViewById(R.id.benchmark_enable_checkbox);
+        CheckBox enabledBox = convertView.findViewById(R.id.benchmark_enable_checkbox);
         enabledBox.setOnClickListener(benchmark);
         enabledBox.setChecked(benchmark.isEnabled());
 
@@ -121,7 +121,7 @@ public class BenchmarkListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public boolean isChildSelectable(final int groupPosition, final int childPosition) {
+    public boolean isChildSelectable(int groupPosition, int childPosition) {
         return true;
     }
 

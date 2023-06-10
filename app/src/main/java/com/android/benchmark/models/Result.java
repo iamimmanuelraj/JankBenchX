@@ -67,154 +67,154 @@ public class Result {
     private Double ms99thPctl;
 
     public String getTestName() {
-        return this.testName;
+        return testName;
     }
 
-    public void setTestName(final String testName) {
+    public void setTestName(String testName) {
         this.testName = testName;
     }
 
     public Integer getScore() {
-        return this.score;
+        return score;
     }
 
-    public void setScore(final Integer score) {
+    public void setScore(Integer score) {
         this.score = score;
     }
 
     public Integer getJankPenalty() {
-        return this.jankPenalty;
+        return jankPenalty;
     }
 
-    public void setJankPenalty(final Integer jankPenalty) {
+    public void setJankPenalty(Integer jankPenalty) {
         this.jankPenalty = jankPenalty;
     }
 
     public Integer getConsistencyBonus() {
-        return this.consistencyBonus;
+        return consistencyBonus;
     }
 
-    public void setConsistencyBonus(final Integer consistencyBonus) {
+    public void setConsistencyBonus(Integer consistencyBonus) {
         this.consistencyBonus = consistencyBonus;
     }
 
     public Double getJankPct() {
-        return this.jankPct;
+        return jankPct;
     }
 
-    public void setJankPct(final Double jankPct) {
+    public void setJankPct(Double jankPct) {
         this.jankPct = jankPct;
     }
 
     public Double getBadFramePct() {
-        return this.badFramePct;
+        return badFramePct;
     }
 
-    public void setBadFramePct(final Double badFramePct) {
+    public void setBadFramePct(Double badFramePct) {
         this.badFramePct = badFramePct;
     }
 
     public Integer getTotalFrames() {
-        return this.totalFrames;
+        return totalFrames;
     }
 
-    public void setTotalFrames(final Integer totalFrames) {
+    public void setTotalFrames(Integer totalFrames) {
         this.totalFrames = totalFrames;
     }
 
     public Double getMsAvg() {
-        return this.msAvg;
+        return msAvg;
     }
 
-    public void setMsAvg(final Double msAvg) {
+    public void setMsAvg(Double msAvg) {
         this.msAvg = msAvg;
     }
 
     public Double getMs10thPctl() {
-        return this.ms10thPctl;
+        return ms10thPctl;
     }
 
-    public void setMs10thPctl(final Double ms10thPctl) {
+    public void setMs10thPctl(Double ms10thPctl) {
         this.ms10thPctl = ms10thPctl;
     }
 
     public Double getMs20thPctl() {
-        return this.ms20thPctl;
+        return ms20thPctl;
     }
 
-    public void setMs20thPctl(final Double ms20thPctl) {
+    public void setMs20thPctl(Double ms20thPctl) {
         this.ms20thPctl = ms20thPctl;
     }
 
     public Double getMs30thPctl() {
-        return this.ms30thPctl;
+        return ms30thPctl;
     }
 
-    public void setMs30thPctl(final Double ms30thPctl) {
+    public void setMs30thPctl(Double ms30thPctl) {
         this.ms30thPctl = ms30thPctl;
     }
 
     public Double getMs40thPctl() {
-        return this.ms40thPctl;
+        return ms40thPctl;
     }
 
-    public void setMs40thPctl(final Double ms40thPctl) {
+    public void setMs40thPctl(Double ms40thPctl) {
         this.ms40thPctl = ms40thPctl;
     }
 
     public Double getMs50thPctl() {
-        return this.ms50thPctl;
+        return ms50thPctl;
     }
 
-    public void setMs50thPctl(final Double ms50thPctl) {
+    public void setMs50thPctl(Double ms50thPctl) {
         this.ms50thPctl = ms50thPctl;
     }
 
     public Double getMs60thPctl() {
-        return this.ms60thPctl;
+        return ms60thPctl;
     }
 
-    public void setMs60thPctl(final Double ms60thPctl) {
+    public void setMs60thPctl(Double ms60thPctl) {
         this.ms60thPctl = ms60thPctl;
     }
 
     public Double getMs70thPctl() {
-        return this.ms70thPctl;
+        return ms70thPctl;
     }
 
-    public void setMs70thPctl(final Double ms70thPctl) {
+    public void setMs70thPctl(Double ms70thPctl) {
         this.ms70thPctl = ms70thPctl;
     }
 
     public Double getMs80thPctl() {
-        return this.ms80thPctl;
+        return ms80thPctl;
     }
 
-    public void setMs80thPctl(final Double ms80thPctl) {
+    public void setMs80thPctl(Double ms80thPctl) {
         this.ms80thPctl = ms80thPctl;
     }
 
     public Double getMs90thPctl() {
-        return this.ms90thPctl;
+        return ms90thPctl;
     }
 
-    public void setMs90thPctl(final Double ms90thPctl) {
+    public void setMs90thPctl(Double ms90thPctl) {
         this.ms90thPctl = ms90thPctl;
     }
 
     public Double getMs95thPctl() {
-        return this.ms95thPctl;
+        return ms95thPctl;
     }
 
-    public void setMs95thPctl(final Double ms95thPctl) {
+    public void setMs95thPctl(Double ms95thPctl) {
         this.ms95thPctl = ms95thPctl;
     }
 
     public Double getMs99thPctl() {
-        return this.ms99thPctl;
+        return ms99thPctl;
     }
 
-    public void setMs99thPctl(final Double ms99thPctl) {
+    public void setMs99thPctl(Double ms99thPctl) {
         this.ms99thPctl = ms99thPctl;
     }
 

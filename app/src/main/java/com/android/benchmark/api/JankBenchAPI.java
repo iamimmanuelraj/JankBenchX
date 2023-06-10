@@ -30,46 +30,46 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public enum JankBenchAPI {
     ;
 
-    public static boolean uploadResults(final Context context, @NonNull final String baseUrl) {
+    public static boolean uploadResults(Context context, @NonNull String baseUrl) {
         boolean success= false;
-        final Entry entry = JankBenchAPI.createEntry(context);
+        Entry entry = createEntry(context);
 
         try {
-            success = JankBenchAPI.upload(entry, baseUrl);
-        } catch (final IOException e) {
+            success = upload(entry, baseUrl);
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
         return success;
     }
 
-    private static boolean upload(final Entry entry, @NonNull final String url) throws IOException {
-        final Retrofit retrofit = new Retrofit.Builder()
+    private static boolean upload(Entry entry, @NonNull String url) throws IOException {
+        Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        final JankBenchService resource = retrofit.create(JankBenchService.class);
+        JankBenchService resource = retrofit.create(JankBenchService.class);
 
-        final Call<Entry> call = resource.uploadEntry(entry);
-        final Response<Entry> response = call.execute();
+        Call<Entry> call = resource.uploadEntry(entry);
+        Response<Entry> response = call.execute();
 
         return response.isSuccessful();
     }
 
     @NonNull
-    private static Entry createEntry(final Context context) {
-        final int lastRunId = GlobalResultsStore.getInstance(context).getLastRunId();
-        final SQLiteDatabase db = GlobalResultsStore.getInstance(context).getReadableDatabase();
+    private static Entry createEntry(Context context) {
+        int lastRunId = GlobalResultsStore.getInstance(context).getLastRunId();
+        SQLiteDatabase db = GlobalResultsStore.getInstance(context).getReadableDatabase();
         int lastRunRefreshRate;
         try {
             lastRunRefreshRate = GlobalResultsStore.getInstance(context).loadRefreshRate(lastRunId, db);
         } finally {
             db.close();
         }
-        final HashMap<String, UiBenchmarkResult> resultsMap = GlobalResultsStore.getInstance(context).loadDetailedAggregatedResults(lastRunId);
+        HashMap<String, UiBenchmarkResult> resultsMap = GlobalResultsStore.getInstance(context).loadDetailedAggregatedResults(lastRunId);
 
-        final Entry entry = new Entry();
+        Entry entry = new Entry();
 
         entry.setRunId(lastRunId);
         entry.setBenchmarkVersion(Constants.BENCHMARK_VERSION);
@@ -86,16 +86,16 @@ public enum JankBenchAPI {
         entry.setFingerprint(Build.FINGERPRINT);
         entry.setRefreshRate(lastRunRefreshRate);
 
-        final String kernel_version = JankBenchAPI.getKernelVersion();
+        String kernel_version = getKernelVersion();
         entry.setKernelVersion(kernel_version);
 
-        final List<Result> results = new ArrayList<>();
+        List<Result> results = new ArrayList<>();
 
-        for (final Map.Entry<String, UiBenchmarkResult> resultEntry : resultsMap.entrySet()) {
-            final String testName = resultEntry.getKey();
-            final UiBenchmarkResult uiResult = resultEntry.getValue();
+        for (Map.Entry<String, UiBenchmarkResult> resultEntry : resultsMap.entrySet()) {
+            String testName = resultEntry.getKey();
+            UiBenchmarkResult uiResult = resultEntry.getValue();
 
-            final Result result = new Result();
+            Result result = new Result();
             result.setTestName(testName);
             result.setScore(uiResult.getScore());
             result.setJankPenalty(uiResult.getJankPenalty());
@@ -126,8 +126,8 @@ public enum JankBenchAPI {
 
     @Nullable
     private static String getKernelVersion() {
-        final List<String> unameOutput = Shell.sh("uname -a").exec().getOut();
-        final String kernel_version = 0 == unameOutput.size() ? null : unameOutput.get(0);
+        List<String> unameOutput = Shell.sh("uname -a").exec().getOut();
+        String kernel_version = 0 == unameOutput.size() ? null : unameOutput.get(0);
         return kernel_version;
     }
 }

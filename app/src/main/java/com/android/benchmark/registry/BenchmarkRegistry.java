@@ -61,36 +61,36 @@ public class BenchmarkRegistry {
 
     private final Context mContext;
 
-    public BenchmarkRegistry(final Context context) {
-        this.mContext = context;
-        this.mGroups = new ArrayList<>();
-        this.loadBenchmarks();
+    public BenchmarkRegistry(Context context) {
+        mContext = context;
+        mGroups = new ArrayList<>();
+        loadBenchmarks();
     }
 
     @NonNull
-    private Intent getIntentFromInfo(@NonNull final ActivityInfo inf) {
-        final Intent intent = new Intent();
+    private Intent getIntentFromInfo(@NonNull ActivityInfo inf) {
+        Intent intent = new Intent();
         intent.setClassName(inf.packageName, inf.name);
         return intent;
     }
 
     public void loadBenchmarks() {
-        final Intent intent = new Intent(BenchmarkRegistry.ACTION_BENCHMARK);
-        intent.setPackage(this.mContext.getPackageName());
+        Intent intent = new Intent(ACTION_BENCHMARK);
+        intent.setPackage(mContext.getPackageName());
 
-        final PackageManager pm = this.mContext.getPackageManager();
-        final List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent,
+        PackageManager pm = mContext.getPackageManager();
+        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent,
                 PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA);
 
-        for (final ResolveInfo inf : resolveInfos) {
-            final List<BenchmarkGroup> groups = this.parseBenchmarkGroup(inf.activityInfo);
+        for (ResolveInfo inf : resolveInfos) {
+            List<BenchmarkGroup> groups = parseBenchmarkGroup(inf.activityInfo);
             if (null != groups) {
-                this.mGroups.addAll(groups);
+                mGroups.addAll(groups);
             }
         }
     }
 
-    private boolean seekToTag(@NonNull final XmlPullParser parser, @NonNull final String tag)
+    private boolean seekToTag(@NonNull XmlPullParser parser, @NonNull String tag)
             throws XmlPullParserException, IOException {
         int eventType = parser.getEventType();
         while (XmlPullParser.START_TAG != eventType && XmlPullParser.END_DOCUMENT != eventType) {
@@ -99,7 +99,7 @@ public class BenchmarkRegistry {
         return XmlPullParser.END_DOCUMENT != eventType && tag.equals(parser.getName());
     }
 
-    @BenchmarkCategory int getCategory(final int category) {
+    @BenchmarkCategory int getCategory(int category) {
         if (BenchmarkCategory.COMPUTE == category) {
             return BenchmarkCategory.COMPUTE;
         } else if (BenchmarkCategory.UI == category) {
@@ -110,40 +110,40 @@ public class BenchmarkRegistry {
     }
 
     @Nullable
-    private List<BenchmarkGroup> parseBenchmarkGroup(@NonNull final ActivityInfo activityInfo) {
-        final PackageManager pm = this.mContext.getPackageManager();
+    private List<BenchmarkGroup> parseBenchmarkGroup(@NonNull ActivityInfo activityInfo) {
+        PackageManager pm = mContext.getPackageManager();
 
-        final ComponentName componentName = new ComponentName(
+        ComponentName componentName = new ComponentName(
                 activityInfo.packageName, activityInfo.name);
 
-        final SparseArray<List<BenchmarkGroup.Benchmark>> benchmarks = new SparseArray<>();
-        final String groupName;
-        final String groupDescription;
-        try (final XmlResourceParser parser = activityInfo.loadXmlMetaData(pm, BenchmarkRegistry.BENCHMARK_GROUP_META_KEY)) {
+        SparseArray<List<BenchmarkGroup.Benchmark>> benchmarks = new SparseArray<>();
+        String groupName;
+        String groupDescription;
+        try (XmlResourceParser parser = activityInfo.loadXmlMetaData(pm, BENCHMARK_GROUP_META_KEY)) {
 
-            if (!this.seekToTag(parser, BenchmarkRegistry.TAG_BENCHMARK_GROUP)) {
+            if (!seekToTag(parser, TAG_BENCHMARK_GROUP)) {
                 return null;
             }
 
-            final Resources res = pm.getResourcesForActivity(componentName);
-            final AttributeSet attributeSet = Xml.asAttributeSet(parser);
-            final TypedArray groupAttribs = res.obtainAttributes(attributeSet, R.styleable.BenchmarkGroup);
+            Resources res = pm.getResourcesForActivity(componentName);
+            AttributeSet attributeSet = Xml.asAttributeSet(parser);
+            TypedArray groupAttribs = res.obtainAttributes(attributeSet, R.styleable.BenchmarkGroup);
 
             groupName = groupAttribs.getString(R.styleable.BenchmarkGroup_name);
             groupDescription = groupAttribs.getString(R.styleable.BenchmarkGroup_description);
             groupAttribs.recycle();
             parser.next();
 
-            while (this.seekToTag(parser, BenchmarkRegistry.TAG_BENCHMARK)) {
-                final TypedArray benchAttribs =
+            while (seekToTag(parser, TAG_BENCHMARK)) {
+                TypedArray benchAttribs =
                         res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.Benchmark);
-                final int id = benchAttribs.getResourceId(R.styleable.Benchmark_id, -1);
-                final String testName = benchAttribs.getString(R.styleable.Benchmark_name);
-                final String testDescription = benchAttribs.getString(R.styleable.Benchmark_description);
-                final int testCategory = benchAttribs.getInt(R.styleable.Benchmark_category,
+                int id = benchAttribs.getResourceId(R.styleable.Benchmark_id, -1);
+                String testName = benchAttribs.getString(R.styleable.Benchmark_name);
+                String testDescription = benchAttribs.getString(R.styleable.Benchmark_description);
+                int testCategory = benchAttribs.getInt(R.styleable.Benchmark_category,
                         BenchmarkCategory.GENERIC);
-                final int category = this.getCategory(testCategory);
-                final BenchmarkGroup.Benchmark benchmark = new BenchmarkGroup.Benchmark(
+                int category = getCategory(testCategory);
+                BenchmarkGroup.Benchmark benchmark = new BenchmarkGroup.Benchmark(
                         id, testName, category, testDescription);
                 List<BenchmarkGroup.Benchmark> benches = benchmarks.get(category);
                 if (null == benches) {
@@ -156,20 +156,20 @@ public class BenchmarkRegistry {
                 benchAttribs.recycle();
                 parser.next();
             }
-        } catch (final PackageManager.NameNotFoundException | XmlPullParserException | IOException e) {
+        } catch (PackageManager.NameNotFoundException | XmlPullParserException | IOException e) {
             return null;
         }
 
-        final List<BenchmarkGroup> result = new ArrayList<>();
-        final Intent testIntent = this.getIntentFromInfo(activityInfo);
+        List<BenchmarkGroup> result = new ArrayList<>();
+        Intent testIntent = getIntentFromInfo(activityInfo);
         for (int i = 0; i < benchmarks.size(); i++) {
-            final int cat = benchmarks.keyAt(i);
-            final List<BenchmarkGroup.Benchmark> thisGroup = benchmarks.get(cat);
-            final BenchmarkGroup.Benchmark[] benchmarkArray =
+            int cat = benchmarks.keyAt(i);
+            List<BenchmarkGroup.Benchmark> thisGroup = benchmarks.get(cat);
+            BenchmarkGroup.Benchmark[] benchmarkArray =
                     new BenchmarkGroup.Benchmark[thisGroup.size()];
             thisGroup.toArray(benchmarkArray);
             result.add(new BenchmarkGroup(componentName,
-                    groupName + " - " + BenchmarkRegistry.getCategoryString(cat), groupDescription, benchmarkArray,
+                    groupName + " - " + getCategoryString(cat), groupDescription, benchmarkArray,
                     testIntent));
         }
 
@@ -177,11 +177,11 @@ public class BenchmarkRegistry {
     }
 
     public int getGroupCount() {
-        return this.mGroups.size();
+        return mGroups.size();
     }
 
-    public int getBenchmarkCount(final int benchmarkIndex) {
-        final BenchmarkGroup group = this.getBenchmarkGroup(benchmarkIndex);
+    public int getBenchmarkCount(int benchmarkIndex) {
+        BenchmarkGroup group = getBenchmarkGroup(benchmarkIndex);
         if (null != group) {
             return group.getBenchmarks().length;
         }
@@ -189,16 +189,16 @@ public class BenchmarkRegistry {
     }
 
     @Nullable
-    public BenchmarkGroup getBenchmarkGroup(final int benchmarkIndex) {
-        if (benchmarkIndex >= this.mGroups.size()) {
+    public BenchmarkGroup getBenchmarkGroup(int benchmarkIndex) {
+        if (benchmarkIndex >= mGroups.size()) {
             return null;
         }
 
-        return this.mGroups.get(benchmarkIndex);
+        return mGroups.get(benchmarkIndex);
     }
 
     @NonNull
-    public static String getCategoryString(final int category) {
+    public static String getCategoryString(int category) {
         if (BenchmarkCategory.COMPUTE == category) {
             return "Compute";
         } else if (BenchmarkCategory.UI == category) {
@@ -210,7 +210,7 @@ public class BenchmarkRegistry {
         }
     }
 
-    public static String getBenchmarkName(@NonNull final Context context, final int benchmarkId) {
+    public static String getBenchmarkName(@NonNull Context context, int benchmarkId) {
         if (benchmarkId == R.id.benchmark_list_view_scroll) {
             return context.getString(R.string.list_view_scroll_name);
         } else if (benchmarkId == R.id.benchmark_image_list_view_scroll) {

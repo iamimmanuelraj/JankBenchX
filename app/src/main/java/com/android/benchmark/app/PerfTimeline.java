@@ -49,80 +49,80 @@ public class PerfTimeline extends View {
     public float[] mLinesHigh;
     public float[] mLinesValue;
 
-    public PerfTimeline(final Context context) {
+    public PerfTimeline(Context context) {
         super(context);
-        this.init(null, 0);
+        init(null, 0);
     }
 
-    public PerfTimeline(final Context context, final AttributeSet attrs) {
+    public PerfTimeline(Context context, AttributeSet attrs) {
         super(context, attrs);
-        this.init(attrs, 0);
+        init(attrs, 0);
     }
 
-    public PerfTimeline(final Context context, final AttributeSet attrs, final int defStyle) {
+    public PerfTimeline(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        this.init(attrs, defStyle);
+        init(attrs, defStyle);
     }
 
-    private void init(final AttributeSet attrs, final int defStyle) {
+    private void init(AttributeSet attrs, int defStyle) {
         // Load attributes
-        TypedArray a = this.getContext().obtainStyledAttributes(
+        final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.PerfTimeline, defStyle, 0);
 
-        this.mExampleString = "xx";//a.getString(R.styleable.PerfTimeline_exampleString, "xx");
-        this.mExampleColor = a.getColor(R.styleable.PerfTimeline_exampleColor, this.mExampleColor);
+        mExampleString = "xx";//a.getString(R.styleable.PerfTimeline_exampleString, "xx");
+        mExampleColor = a.getColor(R.styleable.PerfTimeline_exampleColor, mExampleColor);
         // Use getDimensionPixelSize or getDimensionPixelOffset when dealing with
         // values that should fall on pixel boundaries.
-        this.mExampleDimension = a.getDimension(
+        mExampleDimension = a.getDimension(
                 R.styleable.PerfTimeline_exampleDimension,
-                this.mExampleDimension);
+                mExampleDimension);
 
         a.recycle();
 
         // Set up a default TextPaint object
-        this.mTextPaint = new TextPaint();
-        this.mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        this.mTextPaint.setTextAlign(Paint.Align.LEFT);
+        mTextPaint = new TextPaint();
+        mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mTextPaint.setTextAlign(Paint.Align.LEFT);
 
         // Update TextPaint and text measurements from attributes
-        this.invalidateTextPaintAndMeasurements();
+        invalidateTextPaintAndMeasurements();
 
-        this.mPaintBaseLow = new Paint(Paint.ANTI_ALIAS_FLAG);
-        this.mPaintBaseLow.setStyle(Paint.Style.FILL);
-        this.mPaintBaseLow.setColor(0xff000000);
+        mPaintBaseLow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaintBaseLow.setStyle(Paint.Style.FILL);
+        mPaintBaseLow.setColor(0xff000000);
 
-        this.mPaintBaseHigh = new Paint(Paint.ANTI_ALIAS_FLAG);
-        this.mPaintBaseHigh.setStyle(Paint.Style.FILL);
-        this.mPaintBaseHigh.setColor(0x7f7f7f7f);
+        mPaintBaseHigh = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaintBaseHigh.setStyle(Paint.Style.FILL);
+        mPaintBaseHigh.setColor(0x7f7f7f7f);
 
-        this.mPaintValue = new Paint(Paint.ANTI_ALIAS_FLAG);
-        this.mPaintValue.setStyle(Paint.Style.FILL);
-        this.mPaintValue.setColor(0x7fff0000);
+        mPaintValue = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaintValue.setStyle(Paint.Style.FILL);
+        mPaintValue.setColor(0x7fff0000);
 
     }
 
     private void invalidateTextPaintAndMeasurements() {
-        this.mTextPaint.setTextSize(this.mExampleDimension);
-        this.mTextPaint.setColor(this.mExampleColor);
-        this.mTextWidth = this.mTextPaint.measureText(this.mExampleString);
+        mTextPaint.setTextSize(mExampleDimension);
+        mTextPaint.setColor(mExampleColor);
+        mTextWidth = mTextPaint.measureText(mExampleString);
 
-        final Paint.FontMetrics fontMetrics = this.mTextPaint.getFontMetrics();
-        this.mTextHeight = fontMetrics.bottom;
+        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
+        mTextHeight = fontMetrics.bottom;
     }
 
     @Override
-    protected void onDraw(@NonNull final Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
         // TODO: consider storing these as member variables to reduce
         // allocations per draw cycle.
-        final int paddingLeft = this.getPaddingLeft();
-        final int paddingTop = this.getPaddingTop();
-        final int paddingRight = this.getPaddingRight();
-        final int paddingBottom = this.getPaddingBottom();
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+        int paddingRight = getPaddingRight();
+        int paddingBottom = getPaddingBottom();
 
-        final int contentWidth = this.getWidth() - paddingLeft - paddingRight;
-        final int contentHeight = this.getHeight() - paddingTop - paddingBottom;
+        int contentWidth = getWidth() - paddingLeft - paddingRight;
+        int contentHeight = getHeight() - paddingTop - paddingBottom;
 
         // Draw the text.
         //canvas.drawText(mExampleString,
@@ -137,14 +137,14 @@ public class PerfTimeline extends View {
         //RectF rf = new RectF(10.f, 10.f, 100.f, 100.f);
         //canvas.drawOval(rf, mShadowPaint);
 
-        if (null != mLinesLow) {
-            canvas.drawLines(this.mLinesLow, this.mPaintBaseLow);
+        if (null != this.mLinesLow) {
+            canvas.drawLines(mLinesLow, mPaintBaseLow);
         }
-        if (null != mLinesHigh) {
-            canvas.drawLines(this.mLinesHigh, this.mPaintBaseHigh);
+        if (null != this.mLinesHigh) {
+            canvas.drawLines(mLinesHigh, mPaintBaseHigh);
         }
-        if (null != mLinesValue) {
-            canvas.drawLines(this.mLinesValue, this.mPaintValue);
+        if (null != this.mLinesValue) {
+            canvas.drawLines(mLinesValue, mPaintValue);
         }
 
 
@@ -170,7 +170,7 @@ public class PerfTimeline extends View {
      * @return The example string attribute value.
      */
     public String getExampleString() {
-        return this.mExampleString;
+        return mExampleString;
     }
 
     /**
@@ -179,9 +179,9 @@ public class PerfTimeline extends View {
      *
      * @param exampleString The example string attribute value to use.
      */
-    public void setExampleString(final String exampleString) {
-        this.mExampleString = exampleString;
-        this.invalidateTextPaintAndMeasurements();
+    public void setExampleString(String exampleString) {
+        mExampleString = exampleString;
+        invalidateTextPaintAndMeasurements();
     }
 
     /**
@@ -190,7 +190,7 @@ public class PerfTimeline extends View {
      * @return The example color attribute value.
      */
     public int getExampleColor() {
-        return this.mExampleColor;
+        return mExampleColor;
     }
 
     /**
@@ -199,9 +199,9 @@ public class PerfTimeline extends View {
      *
      * @param exampleColor The example color attribute value to use.
      */
-    public void setExampleColor(final int exampleColor) {
-        this.mExampleColor = exampleColor;
-        this.invalidateTextPaintAndMeasurements();
+    public void setExampleColor(int exampleColor) {
+        mExampleColor = exampleColor;
+        invalidateTextPaintAndMeasurements();
     }
 
     /**
@@ -210,7 +210,7 @@ public class PerfTimeline extends View {
      * @return The example dimension attribute value.
      */
     public float getExampleDimension() {
-        return this.mExampleDimension;
+        return mExampleDimension;
     }
 
     /**
@@ -219,8 +219,8 @@ public class PerfTimeline extends View {
      *
      * @param exampleDimension The example dimension attribute value to use.
      */
-    public void setExampleDimension(final float exampleDimension) {
-        this.mExampleDimension = exampleDimension;
-        this.invalidateTextPaintAndMeasurements();
+    public void setExampleDimension(float exampleDimension) {
+        mExampleDimension = exampleDimension;
+        invalidateTextPaintAndMeasurements();
     }
 }

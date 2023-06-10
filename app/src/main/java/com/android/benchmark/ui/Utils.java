@@ -30,22 +30,22 @@ public enum Utils {
     private static final int RANDOM_WORD_LENGTH = 10;
 
     @NonNull
-    public static String getRandomWord(@NonNull final Random random, final int length) {
-        final StringBuilder builder = new StringBuilder();
+    public static String getRandomWord(@NonNull Random random, int length) {
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            final char base = random.nextBoolean() ? 'A' : 'a';
-            final char nextChar = (char)(random.nextInt(26) + base);
+            char base = random.nextBoolean() ? 'A' : 'a';
+            char nextChar = (char)(random.nextInt(26) + base);
             builder.append(nextChar);
         }
         return builder.toString();
     }
 
     @NonNull
-    public static String[] buildStringList(final int count) {
-        final Random random = new Random(0);
-        final String[] result = new String[count];
+    public static String[] buildStringList(int count) {
+        Random random = new Random(0);
+        String[] result = new String[count];
         for (int i = 0; i < count; i++) {
-            result[i] = Utils.getRandomWord(random, Utils.RANDOM_WORD_LENGTH);
+            result[i] = getRandomWord(random, RANDOM_WORD_LENGTH);
         }
 
         return result;
@@ -70,26 +70,26 @@ public enum Utils {
     private static final int PARAGRAPH_MISS_MAX_LENGTH = 9;
 
     @NonNull
-    static String[] buildParagraphListWithHitPercentage(final int paragraphCount, final int hitPercentage) {
+    static String[] buildParagraphListWithHitPercentage(int paragraphCount, int hitPercentage) {
         if (0 > hitPercentage || 100 < hitPercentage) throw new IllegalArgumentException();
 
-        final String[] strings = new String[paragraphCount];
-        final Random random = new Random(0);
+        String[] strings = new String[paragraphCount];
+        Random random = new Random(0);
         for (int i = 0; i < strings.length; i++) {
-            final StringBuilder result = new StringBuilder();
-            for (int word = 0; WORDS_IN_PARAGRAPH > word; word++) {
+            StringBuilder result = new StringBuilder();
+            for (int word = 0; Utils.WORDS_IN_PARAGRAPH > word; word++) {
                 if (0 != word) {
                     result.append(" ");
                 }
                 if (random.nextInt(100) < hitPercentage) {
                     // add a common word, which is very likely to hit in the cache
-                    result.append(Utils.CACHE_HIT_STRINGS[random.nextInt(Utils.CACHE_HIT_STRINGS.length)]);
+                    result.append(CACHE_HIT_STRINGS[random.nextInt(CACHE_HIT_STRINGS.length)]);
                 } else {
                     // construct a random word, which will *most likely* miss
-                    int length = Utils.PARAGRAPH_MISS_MIN_LENGTH;
-                    length += random.nextInt(Utils.PARAGRAPH_MISS_MAX_LENGTH - Utils.PARAGRAPH_MISS_MIN_LENGTH);
+                    int length = PARAGRAPH_MISS_MIN_LENGTH;
+                    length += random.nextInt(PARAGRAPH_MISS_MAX_LENGTH - PARAGRAPH_MISS_MIN_LENGTH);
 
-                    result.append(Utils.getRandomWord(random, length));
+                    result.append(getRandomWord(random, length));
                 }
             }
             strings[i] = result.toString();
@@ -100,16 +100,16 @@ public enum Utils {
 
 
     public static int calculateInSampleSize(
-            @NonNull final BitmapFactory.Options options, final int reqWidth, final int reqHeight) {
+            @NonNull BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
-        int height = options.outHeight;
-        int width = options.outWidth;
+        final int height = options.outHeight;
+        final int width = options.outWidth;
         int inSampleSize = 1;
 
         if (height > reqHeight || width > reqWidth) {
 
-            int halfHeight = height / 2;
-            int halfWidth = width / 2;
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
 
             // Calculate the largest inSampleSize value that is a power of 2 and keeps both
             // height and width larger than the requested height and width.
@@ -122,16 +122,16 @@ public enum Utils {
         return inSampleSize;
     }
 
-    public static Bitmap decodeSampledBitmapFromResource(final Resources res, final int resId,
-                                                         final int reqWidth, final int reqHeight) {
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                         int reqWidth, int reqHeight) {
 
         // First decode with inJustDecodeBounds=true to check dimensions
-        BitmapFactory.Options options = new BitmapFactory.Options();
+        final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeResource(res, resId, options);
 
         // Calculate inSampleSize
-        options.inSampleSize = Utils.calculateInSampleSize(options, reqWidth, reqHeight);
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;

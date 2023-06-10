@@ -59,30 +59,30 @@ final class CollectorThread extends HandlerThread {
         private static final int MSG_SCHEDULE = 0;
 
         @Override
-        public void handleMessage(final Message msg) {
-            if (!CollectorThread.this.mCollecting) {
+        public void handleMessage(Message msg) {
+            if (!mCollecting) {
                 return;
             }
 
-            final long currentTime = SystemClock.uptimeMillis();
-            if (CollectorThread.this.mLastFrameTime + WatchdogHandler.SCHEDULE_INTERVAL_MILLIS <= currentTime) {
+            long currentTime = SystemClock.uptimeMillis();
+            if (mLastFrameTime + SCHEDULE_INTERVAL_MILLIS <= currentTime) {
                 // haven't seen a frame in a while, interaction is probably done
-                CollectorThread.this.mCollecting = false;
-                final CollectorListener listener = CollectorThread.this.mListener.get();
+                mCollecting = false;
+                CollectorListener listener = mListener.get();
                 if (null != listener) {
-                    listener.onPostInteraction(CollectorThread.this.mFrameTimingStats);
+                    listener.onPostInteraction(mFrameTimingStats);
                 }
             } else {
-                this.schedule();
+                schedule();
             }
         }
 
         public void schedule() {
-            this.sendMessageDelayed(this.obtainMessage(WatchdogHandler.MSG_SCHEDULE), WatchdogHandler.SCHEDULE_INTERVAL_MILLIS);
+            sendMessageDelayed(obtainMessage(MSG_SCHEDULE), SCHEDULE_INTERVAL_MILLIS);
         }
 
         public void deschedule() {
-            this.removeMessages(WatchdogHandler.MSG_SCHEDULE);
+            removeMessages(MSG_SCHEDULE);
         }
     }
 
@@ -92,79 +92,79 @@ final class CollectorThread extends HandlerThread {
     @TargetApi(24)
     private class FrameStatsCollector implements Window.OnFrameMetricsAvailableListener {
         @Override
-        public void onFrameMetricsAvailable(final Window window, final FrameMetrics frameMetrics, final int dropCount) {
-            if (!CollectorThread.this.mCollecting) {
+        public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+            if (!mCollecting) {
                 return;
             }
-            CollectorThread.this.mFrameTimingStats.add(new FrameMetrics(frameMetrics));
-            CollectorThread.this.mLastFrameTime = SystemClock.uptimeMillis();
+            mFrameTimingStats.add(new FrameMetrics(frameMetrics));
+            mLastFrameTime = SystemClock.uptimeMillis();
         }
     }
 
-    public CollectorThread(final CollectorListener listener) {
+    public CollectorThread(CollectorListener listener) {
         super("FrameStatsCollectorThread");
-        this.mFrameTimingStats = new LinkedList<>();
-        this.mListener = new WeakReference<>(listener);
+        mFrameTimingStats = new LinkedList<>();
+        mListener = new WeakReference<>(listener);
     }
 
     @TargetApi(24)
-    public void attachToWindow(@NonNull final Window window) {
-        if (null != mAttachedWindow) {
-            this.mAttachedWindow.removeOnFrameMetricsAvailableListener(this.mCollector);
+    public void attachToWindow(@NonNull Window window) {
+        if (null != this.mAttachedWindow) {
+            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
         }
 
-        this.mAttachedWindow = window;
-        window.addOnFrameMetricsAvailableListener(this.mCollector, new Handler(this.getLooper()));
+        mAttachedWindow = window;
+        window.addOnFrameMetricsAvailableListener(mCollector, new Handler(getLooper()));
     }
 
     @TargetApi(24)
     public synchronized void detachFromWindow() {
-        if (null != mAttachedWindow) {
-            this.mAttachedWindow.removeOnFrameMetricsAvailableListener(this.mCollector);
+        if (null != this.mAttachedWindow) {
+            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
         }
 
-        this.mAttachedWindow = null;
+        mAttachedWindow = null;
     }
 
     @TargetApi(24)
     @Override
     protected void onLooperPrepared() {
         super.onLooperPrepared();
-        this.mCollector = new FrameStatsCollector();
-        this.mWatchdog = new WatchdogHandler();
+        mCollector = new FrameStatsCollector();
+        mWatchdog = new WatchdogHandler();
 
-        final CollectorListener listener = this.mListener.get();
+        CollectorListener listener = mListener.get();
         if (null != listener) {
             listener.onCollectorThreadReady();
         }
     }
 
     public boolean quitCollector() {
-        this.stopCollecting();
-        this.detachFromWindow();
-        System.out.println("Jank Percentage: " + (100 * CollectorThread.janks / (double) CollectorThread.total) + "%");
-        CollectorThread.tripleBuffered = false;
-        CollectorThread.total = 0;
-        CollectorThread.janks = 0;
-        return this.quit();
+        stopCollecting();
+        detachFromWindow();
+        System.out.println("Jank Percentage: " + (100 * janks / (double) total) + "%");
+        tripleBuffered = false;
+        total = 0;
+        janks = 0;
+        return quit();
     }
 
     void stopCollecting() {
-        if (!this.mCollecting) {
+        if (!mCollecting) {
             return;
         }
 
-        this.mCollecting = false;
-        this.mWatchdog.deschedule();
+        mCollecting = false;
+        mWatchdog.deschedule();
 
 
     }
 
     public void markInteractionStart() {
-        this.mLastFrameTime = 0;
-        this.mFrameTimingStats.clear();
-        this.mCollecting = true;
+        mLastFrameTime = 0;
+        mFrameTimingStats.clear();
+        mCollecting = true;
 
-        this.mWatchdog.schedule();
+        mWatchdog.schedule();
     }
 }

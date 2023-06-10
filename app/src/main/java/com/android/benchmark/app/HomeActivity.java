@@ -64,28 +64,28 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     private Queue<Intent> mRunnableBenchmarks;
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_home);
 
-        final Toolbar toolbar = this.findViewById(R.id.toolbar);
-        this.setSupportActionBar(toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        this.mStartButton = this.findViewById(R.id.start_button);
-        this.mStartButton.setActivated(true);
-        this.mStartButton.setOnClickListener(this);
+        mStartButton = findViewById(R.id.start_button);
+        mStartButton.setActivated(true);
+        mStartButton.setOnClickListener(this);
 
-        this.mRegistry = new BenchmarkRegistry(this);
+        mRegistry = new BenchmarkRegistry(this);
 
-        this.mRunnableBenchmarks = new LinkedList<>();
+        mRunnableBenchmarks = new LinkedList<>();
 
-        final ExpandableListView listView = this.findViewById(R.id.test_list);
-        final BenchmarkListAdapter adapter =
-                new BenchmarkListAdapter(LayoutInflater.from(this), this.mRegistry);
+        ExpandableListView listView = findViewById(R.id.test_list);
+        BenchmarkListAdapter adapter =
+                new BenchmarkListAdapter(LayoutInflater.from(this), mRegistry);
         listView.setAdapter(adapter);
 
         adapter.notifyDataSetChanged();
-        final ViewGroup.LayoutParams layoutParams = listView.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = listView.getLayoutParams();
         layoutParams.height = 2048;
         listView.setLayoutParams(layoutParams);
         listView.requestLayout();
@@ -93,42 +93,42 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public boolean onCreateOptionsMenu(final Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        this.getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        final int id = item.getItemId();
+        int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             new AsyncTask<Void, Void, Void>() {
                 @Nullable
                 @Override
-                protected Void doInBackground(final Void... voids) {
+                protected Void doInBackground(Void... voids) {
                     try {
-                        runOnUiThread(new Runnable() {
+                        HomeActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 Toast.makeText(HomeActivity.this, "Exporting...", Toast.LENGTH_LONG).show();
                             }
                         });
                         GlobalResultsStore.getInstance(HomeActivity.this).exportToCsv();
-                    } catch (final IOException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                     return null;
                 }
 
                 @Override
-                protected void onPostExecute(final Void aVoid) {
-                    runOnUiThread(new Runnable() {
+                protected void onPostExecute(Void aVoid) {
+                    HomeActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Toast.makeText(HomeActivity.this, "Done", Toast.LENGTH_LONG).show();
@@ -145,22 +145,22 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Nullable
                 @Override
-                protected Void doInBackground(final Void... voids) {
-                    runOnUiThread(new Runnable() {
+                protected Void doInBackground(Void... voids) {
+                    HomeActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Toast.makeText(HomeActivity.this, "Uploading results...", Toast.LENGTH_LONG).show();
                         }
                     });
 
-                    this.success = JankBenchAPI.uploadResults(HomeActivity.this, Constants.BASE_URL);
+                    success = JankBenchAPI.uploadResults(HomeActivity.this, Constants.BASE_URL);
 
                     return null;
                 }
 
                 @Override
-                protected void onPostExecute(final Void aVoid) {
-                    runOnUiThread(new Runnable() {
+                protected void onPostExecute(Void aVoid) {
+                    HomeActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Toast.makeText(HomeActivity.this, success ? "Upload succeeded" : "Upload failed", Toast.LENGTH_LONG).show();
@@ -171,10 +171,10 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
 
             return true;
         } else if (id == R.id.action_view_results) {
-            final Uri webpage = Uri.parse("https://jankbenchx.vercel.app");
-            final Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
-            if (null != intent.resolveActivity(getPackageManager())) {
-                this.startActivity(intent);
+            Uri webpage = Uri.parse("https://jankbenchx.vercel.app");
+            Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+            if (null != intent.resolveActivity(this.getPackageManager())) {
+                startActivity(intent);
             }
         }
 
@@ -183,26 +183,26 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onClick(final View v) {
-        int groupCount = this.mRegistry.getGroupCount();
+    public void onClick(View v) {
+        final int groupCount = mRegistry.getGroupCount();
         for (int i = 0; i < groupCount; i++) {
 
-            final Intent intent = this.mRegistry.getBenchmarkGroup(i).getIntent();
+            Intent intent = mRegistry.getBenchmarkGroup(i).getIntent();
             if (null != intent) {
-                this.mRunnableBenchmarks.add(intent);
+                mRunnableBenchmarks.add(intent);
             }
         }
 
-        this.handleNextBenchmark();
+        handleNextBenchmark();
     }
 
     @Override
-    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void handleNextBenchmark() {
-        final Intent nextIntent = this.mRunnableBenchmarks.peek();
-        this.startActivityForResult(nextIntent, 0);
+        Intent nextIntent = mRunnableBenchmarks.peek();
+        startActivityForResult(nextIntent, 0);
     }
 }

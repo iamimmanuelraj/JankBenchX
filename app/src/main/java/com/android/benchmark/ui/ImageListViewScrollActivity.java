@@ -57,9 +57,9 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
             R.drawable.img4,
     };
 
-    private static final Bitmap[] mBitmapCache = new Bitmap[ImageListViewScrollActivity.IMG_RES_ID.length];
+    private static final Bitmap[] mBitmapCache = new Bitmap[IMG_RES_ID.length];
 
-    private static final String[] WORDS = Utils.buildStringList(ImageListViewScrollActivity.LIST_SIZE);
+    private static final String[] WORDS = Utils.buildStringList(LIST_SIZE);
 
     private final HashMap<View, BitmapWorkerTask> mInFlight = new HashMap<>();
 
@@ -71,39 +71,39 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
 
     @Override
     protected String getName() {
-        return this.getString(R.string.image_list_view_scroll_name);
+        return getString(R.string.image_list_view_scroll_name);
     }
 
     class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
         @NonNull
         private final WeakReference<ImageView> imageViewReference;
         private int data;
-        private int cacheIdx;
+        private final int cacheIdx;
         volatile boolean cancelled;
 
-        public BitmapWorkerTask(final ImageView imageView, final int cacheIdx) {
+        public BitmapWorkerTask(ImageView imageView, int cacheIdx) {
             // Use a WeakReference to ensure the ImageView can be garbage collected
-            this.imageViewReference = new WeakReference<>(imageView);
+            imageViewReference = new WeakReference<>(imageView);
             this.cacheIdx = cacheIdx;
         }
 
         // Decode image in background.
         @Override
-        protected Bitmap doInBackground(@NonNull final Integer... params) {
-            this.data = params[0];
-            return Utils.decodeSampledBitmapFromResource(ImageListViewScrollActivity.this.getResources(), this.data, 100, 100);
+        protected Bitmap doInBackground(@NonNull Integer... params) {
+            data = params[0];
+            return Utils.decodeSampledBitmapFromResource(getResources(), data, 100, 100);
         }
 
         // Once complete, see if ImageView is still around and set bitmap.
         @Override
-        protected void onPostExecute(@Nullable final Bitmap bitmap) {
+        protected void onPostExecute(@Nullable Bitmap bitmap) {
             if (null != bitmap) {
-                ImageView imageView = this.imageViewReference.get();
+                final ImageView imageView = imageViewReference.get();
                 if (null != imageView) {
-                    if (!this.cancelled) {
+                    if (!cancelled) {
                         imageView.setImageBitmap(bitmap);
                     }
-                    ImageListViewScrollActivity.mBitmapCache[this.cacheIdx] = bitmap;
+                    mBitmapCache[cacheIdx] = bitmap;
                 }
             }
         }
@@ -112,8 +112,8 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        for (int i = 0; i < ImageListViewScrollActivity.mBitmapCache.length; i++) {
-            ImageListViewScrollActivity.mBitmapCache[i] = null;
+        for (int i = 0; i < mBitmapCache.length; i++) {
+            mBitmapCache[i] = null;
         }
     }
 
@@ -121,47 +121,47 @@ public class ImageListViewScrollActivity extends ListViewScrollActivity {
 
         @Override
         public int getCount() {
-            return ImageListViewScrollActivity.LIST_SIZE;
+            return LIST_SIZE;
         }
 
         @Nullable
         @Override
-        public Object getItem(final int postition) {
+        public Object getItem(int postition) {
             return null;
         }
 
         @Override
-        public long getItemId(final int postition) {
+        public long getItemId(int postition) {
             return postition;
         }
 
         @NonNull
         @Override
-        public View getView(final int position, @Nullable View convertView, final ViewGroup parent) {
+        public View getView(int position, @Nullable View convertView, ViewGroup parent) {
             if (null == convertView) {
-                convertView = LayoutInflater.from(ImageListViewScrollActivity.this.getBaseContext())
+                convertView = LayoutInflater.from(getBaseContext())
                         .inflate(R.layout.image_scroll_list_item, parent, false);
             }
 
-            final ImageView imageView = convertView.findViewById(R.id.image_scroll_image);
-            final BitmapWorkerTask inFlight = ImageListViewScrollActivity.this.mInFlight.get(convertView);
+            ImageView imageView = convertView.findViewById(R.id.image_scroll_image);
+            BitmapWorkerTask inFlight = mInFlight.get(convertView);
             if (null != inFlight) {
                 inFlight.cancelled = true;
-                ImageListViewScrollActivity.this.mInFlight.remove(convertView);
+                mInFlight.remove(convertView);
             }
 
-            final int cacheIdx = position % ImageListViewScrollActivity.IMG_RES_ID.length;
-            final Bitmap bitmap = ImageListViewScrollActivity.mBitmapCache[(cacheIdx)];
+            int cacheIdx = position % IMG_RES_ID.length;
+            Bitmap bitmap = mBitmapCache[(cacheIdx)];
             if (null == bitmap) {
-                final BitmapWorkerTask bitmapWorkerTask = new BitmapWorkerTask(imageView, cacheIdx);
-                bitmapWorkerTask.execute(ImageListViewScrollActivity.IMG_RES_ID[(cacheIdx)]);
-                ImageListViewScrollActivity.this.mInFlight.put(convertView, bitmapWorkerTask);
+                BitmapWorkerTask bitmapWorkerTask = new BitmapWorkerTask(imageView, cacheIdx);
+                bitmapWorkerTask.execute(IMG_RES_ID[(cacheIdx)]);
+                mInFlight.put(convertView, bitmapWorkerTask);
             }
 
             imageView.setImageBitmap(bitmap);
 
-            final TextView textView = convertView.findViewById(R.id.image_scroll_text);
-            textView.setText(ImageListViewScrollActivity.WORDS[position]);
+            TextView textView = convertView.findViewById(R.id.image_scroll_text);
+            textView.setText(WORDS[position]);
 
             return convertView;
         }

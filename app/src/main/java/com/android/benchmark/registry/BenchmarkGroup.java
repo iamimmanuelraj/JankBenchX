@@ -50,31 +50,31 @@ public class BenchmarkGroup {
 
         private boolean mEnabled;
 
-        Benchmark(final int id, final String name, @BenchmarkCategory final int category, final String description) {
-            this.mId = id;
-            this.mName = name;
-            this.mCategory = category;
-            this.mDescription = description;
-            this.mEnabled = true;
+        Benchmark(int id, String name, @BenchmarkCategory int category, String description) {
+            mId = id;
+            mName = name;
+            mCategory = category;
+            mDescription = description;
+            mEnabled = true;
         }
 
-        public boolean isEnabled() { return this.mEnabled; }
+        public boolean isEnabled() { return mEnabled; }
 
-        public void setEnabled(final boolean enabled) {
-            this.mEnabled = enabled; }
+        public void setEnabled(boolean enabled) {
+            mEnabled = enabled; }
 
-        public int getId() { return this.mId; }
+        public int getId() { return mId; }
 
-        public String getDescription() { return this.mDescription; }
+        public String getDescription() { return mDescription; }
 
         @BenchmarkCategory
-        public int getCategory() { return this.mCategory; }
+        public int getCategory() { return mCategory; }
 
-        public String getName() { return this.mName; }
+        public String getName() { return mName; }
 
         @Override
-        public void onClick(@NonNull final View view) {
-            mEnabled = ((CheckBox) view).isChecked();
+        public void onClick(@NonNull View view) {
+            this.mEnabled = ((CheckBox) view).isChecked();
         }
     }
 
@@ -101,55 +101,55 @@ public class BenchmarkGroup {
     /** Human-readable description of the benchmark group */
     private final String mDescription;
 
-    BenchmarkGroup(final ComponentName componentName, final String title,
-                   final String description, final Benchmark[] benchmarks, final Intent intent) {
-        this.mComponentName = componentName;
-        this.mTitle = title;
-        this.mBenchmarks = benchmarks;
-        this.mDescription = description;
-        this.mIntent = intent;
+    BenchmarkGroup(ComponentName componentName, String title,
+                   String description, Benchmark[] benchmarks, Intent intent) {
+        mComponentName = componentName;
+        mTitle = title;
+        mBenchmarks = benchmarks;
+        mDescription = description;
+        mIntent = intent;
     }
 
     @Nullable
     public Intent getIntent() {
-        final int[] enabledBenchmarksIds = this.getEnabledBenchmarksIds();
+        int[] enabledBenchmarksIds = getEnabledBenchmarksIds();
         if (0 != enabledBenchmarksIds.length) {
-            this.mIntent.putExtra(BenchmarkGroup.BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds);
-            return this.mIntent;
+            mIntent.putExtra(BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds);
+            return mIntent;
         }
 
         return null;
     }
 
     public ComponentName getComponentName() {
-        return this.mComponentName;
+        return mComponentName;
     }
 
     public String getTitle() {
-        return this.mTitle;
+        return mTitle;
     }
 
     public Benchmark[] getBenchmarks() {
-        return this.mBenchmarks;
+        return mBenchmarks;
     }
 
     public String getDescription() {
-        return this.mDescription;
+        return mDescription;
     }
 
     private int[] getEnabledBenchmarksIds() {
         int enabledBenchmarkCount = 0;
-        for (int i = 0; i < this.mBenchmarks.length; i++) {
-            if (this.mBenchmarks[i].isEnabled()) {
+        for (int i = 0; i < mBenchmarks.length; i++) {
+            if (mBenchmarks[i].isEnabled()) {
                 enabledBenchmarkCount++;
             }
         }
 
         int writeIndex = 0;
-        final int[] enabledBenchmarks = new int[enabledBenchmarkCount];
-        for (int i = 0; i < this.mBenchmarks.length; i++) {
-            if (this.mBenchmarks[i].isEnabled()) {
-                enabledBenchmarks[writeIndex] = this.mBenchmarks[i].getId();
+        int[] enabledBenchmarks = new int[enabledBenchmarkCount];
+        for (int i = 0; i < mBenchmarks.length; i++) {
+            if (mBenchmarks[i].isEnabled()) {
+                enabledBenchmarks[writeIndex] = mBenchmarks[i].getId();
                 writeIndex++;
             }
         }

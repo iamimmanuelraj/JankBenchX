@@ -59,130 +59,130 @@ public class Entry {
     private Integer refreshRate;
 
     public Integer getRunId() {
-        return this.runId;
+        return runId;
     }
 
-    public void setRunId(final Integer runId) {
+    public void setRunId(Integer runId) {
         this.runId = runId;
     }
 
     public String getBenchmarkVersion() {
-        return this.benchmarkVersion;
+        return benchmarkVersion;
     }
 
-    public void setBenchmarkVersion(final String benchmarkVersion) {
+    public void setBenchmarkVersion(String benchmarkVersion) {
         this.benchmarkVersion = benchmarkVersion;
     }
 
     public String getDeviceName() {
-        return this.device_name;
+        return device_name;
     }
 
-    public void setDeviceName(final String device_name) {
+    public void setDeviceName(String device_name) {
         this.device_name = device_name;
     }
 
     public String getDeviceModel() {
-        return this.deviceModel;
+        return deviceModel;
     }
 
-    public void setDeviceModel(final String deviceModel) {
+    public void setDeviceModel(String deviceModel) {
         this.deviceModel = deviceModel;
     }
 
     public String getDeviceProduct() {
-        return this.deviceProduct;
+        return deviceProduct;
     }
 
-    public void setDeviceProduct(final String deviceProduct) {
+    public void setDeviceProduct(String deviceProduct) {
         this.deviceProduct = deviceProduct;
     }
 
     public String getDeviceBoard() {
-        return this.deviceBoard;
+        return deviceBoard;
     }
 
-    public void setDeviceBoard(final String deviceBoard) {
+    public void setDeviceBoard(String deviceBoard) {
         this.deviceBoard = deviceBoard;
     }
 
     public String getDeviceManufacturer() {
-        return this.deviceManufacturer;
+        return deviceManufacturer;
     }
 
-    public void setDeviceManufacturer(final String deviceManufacturer) {
+    public void setDeviceManufacturer(String deviceManufacturer) {
         this.deviceManufacturer = deviceManufacturer;
     }
 
     public String getDeviceBrand() {
-        return this.deviceBrand;
+        return deviceBrand;
     }
 
-    public void setDeviceBrand(final String deviceBrand) {
+    public void setDeviceBrand(String deviceBrand) {
         this.deviceBrand = deviceBrand;
     }
 
     public String getDeviceHardware() {
-        return this.deviceHardware;
+        return deviceHardware;
     }
 
-    public void setDeviceHardware(final String deviceHardware) {
+    public void setDeviceHardware(String deviceHardware) {
         this.deviceHardware = deviceHardware;
     }
 
     public String getAndroidVersion() {
-        return this.androidVersion;
+        return androidVersion;
     }
 
-    public void setAndroidVersion(final String androidVersion) {
+    public void setAndroidVersion(String androidVersion) {
         this.androidVersion = androidVersion;
     }
 
     public String getBuildType() {
-        return this.buildType;
+        return buildType;
     }
 
-    public void setBuildType(final String buildType) {
+    public void setBuildType(String buildType) {
         this.buildType = buildType;
     }
 
     public String getBuildTime() {
-        return this.buildTime;
+        return buildTime;
     }
 
-    public void setBuildTime(final String buildTime) {
+    public void setBuildTime(String buildTime) {
         this.buildTime = buildTime;
     }
 
     public String getFingerprint() {
-        return this.fingerprint;
+        return fingerprint;
     }
 
-    public void setFingerprint(final String fingerprint) {
+    public void setFingerprint(String fingerprint) {
         this.fingerprint = fingerprint;
     }
 
     public String getKernelVersion() {
-        return this.kernelVersion;
+        return kernelVersion;
     }
 
-    public void setKernelVersion(final String kernelVersion) {
+    public void setKernelVersion(String kernelVersion) {
         this.kernelVersion = kernelVersion;
     }
 
     public List<Result> getResults() {
-        return this.results;
+        return results;
     }
 
-    public void setResults(final List<Result> results) {
+    public void setResults(List<Result> results) {
         this.results = results;
     }
 
     public int getRefreshRate() {
-        return this.refreshRate;
+        return refreshRate;
     }
 
-    public void setRefreshRate(final int refreshRate) {
+    public void setRefreshRate(int refreshRate) {
         this.refreshRate = refreshRate;
     }
 }

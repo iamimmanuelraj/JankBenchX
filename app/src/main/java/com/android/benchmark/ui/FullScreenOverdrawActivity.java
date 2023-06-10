@@ -46,20 +46,20 @@ public class FullScreenOverdrawActivity extends AppCompatActivity {
         Paint paint = new Paint();
         int mColorValue;
 
-        public OverdrawView(final Context context) {
+        public OverdrawView(Context context) {
             super(context);
         }
 
         @Keep
         @SuppressWarnings("unused")
-        public void setColorValue(final int colorValue) {
-            this.mColorValue = colorValue;
-            this.invalidate();
+        public void setColorValue(int colorValue) {
+            mColorValue = colorValue;
+            invalidate();
         }
 
         @Override
-        public boolean onTouchEvent(final MotionEvent event) {
-            final ObjectAnimator objectAnimator = ObjectAnimator.ofInt(this, "colorValue", 0, 255);
+        public boolean onTouchEvent(MotionEvent event) {
+            ObjectAnimator objectAnimator = ObjectAnimator.ofInt(this, "colorValue", 0, 255);
             objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
             objectAnimator.setRepeatCount(100);
             objectAnimator.start();
@@ -67,55 +67,55 @@ public class FullScreenOverdrawActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onDraw(@NonNull final Canvas canvas) {
-            this.paint.setColor(Color.rgb(this.mColorValue, 255 - this.mColorValue, 255));
+        protected void onDraw(@NonNull Canvas canvas) {
+            paint.setColor(Color.rgb(mColorValue, 255 - mColorValue, 255));
 
             for (int i = 0; 10 > i; i++) {
-                canvas.drawRect(0, 0, this.getWidth(), this.getHeight(), this.paint);
+                canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
             }
         }
     }
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        OverdrawView overdrawView = new OverdrawView(this);
+        final OverdrawView overdrawView = new OverdrawView(this);
         overdrawView.setKeepScreenOn(true);
-        this.setContentView(overdrawView);
+        setContentView(overdrawView);
 
-        int runId = this.getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        int iteration = this.getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
+        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
+        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
 
-        final String name = BenchmarkRegistry.getBenchmarkName(this, R.id.benchmark_overdraw);
+        String name = BenchmarkRegistry.getBenchmarkName(this, R.id.benchmark_overdraw);
 
-        this.mAutomator = new Automator(name, runId, iteration, this.getWindow(),
+        mAutomator = new Automator(name, runId, iteration, getWindow(),
                 new Automator.AutomateCallback() {
                     @Override
                     public void onPostAutomate() {
-                        final Intent result = new Intent();
-                        FullScreenOverdrawActivity.this.setResult(Activity.RESULT_OK, result);
-                        FullScreenOverdrawActivity.this.finish();
+                        Intent result = new Intent();
+                        setResult(Activity.RESULT_OK, result);
+                        finish();
                     }
 
                     @Override
                     public void onAutomate() {
-                        final int[] coordinates = new int[2];
+                        int[] coordinates = new int[2];
                         overdrawView.getLocationOnScreen(coordinates);
 
-                        final int x = coordinates[0];
-                        final int y = coordinates[1];
+                        int x = coordinates[0];
+                        int y = coordinates[1];
 
-                        final float width = overdrawView.getWidth();
-                        final float height = overdrawView.getHeight();
+                        float width = overdrawView.getWidth();
+                        float height = overdrawView.getHeight();
 
-                        final float middleX = (x + width) / 5;
-                        final float middleY = (y + height) / 5;
+                        float middleX = (x + width) / 5;
+                        float middleY = (y + height) / 5;
 
-                        this.addInteraction(Interaction.newTap(middleX, middleY));
+                        addInteraction(Interaction.newTap(middleX, middleY));
                     }
                 });
 
-        this.mAutomator.start();
+        mAutomator.start();
     }
 }
