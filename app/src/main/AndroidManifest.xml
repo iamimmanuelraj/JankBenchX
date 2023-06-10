@@ -14,7 +14,10 @@
   ~
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.benchmark">
+    package="com.android.benchmark"
+    xmlns:dist="http://schemas.android.com/apk/distribution">
+
+    <dist:module dist:instant="true" />
 
     <android:uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <android:uses-permission android:name="android.permission.READ_PHONE_STATE" />
