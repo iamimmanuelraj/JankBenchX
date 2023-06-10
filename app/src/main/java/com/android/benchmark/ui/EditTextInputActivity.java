@@ -16,6 +16,7 @@
 
 package com.android.benchmark.ui;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
