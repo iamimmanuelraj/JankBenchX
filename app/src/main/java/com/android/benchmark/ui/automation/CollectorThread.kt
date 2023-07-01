@@ -15,8 +15,6 @@
  */
 package com.android.benchmark.ui.automation
 
-import android.annotation.TargetApiimport
-
 android.os.Handlerimport android.os.HandlerThreadimport android.os.Messageimport android.os.SystemClockimport android.view.FrameMetricsimport android.view.Windowimport android.view.Window.OnFrameMetricsAvailableListenerimport java.lang.ref.WeakReferenceimport java.util.LinkedList
 /**
  *

@@ -1,7 +1,6 @@
 package com.android.benchmark.modelsimport
 
 import androidx.annotation.Keep
-import com.android.benchmark.models.Result
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 

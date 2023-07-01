@@ -15,8 +15,6 @@
  */
 package com.android.benchmark.ui.automation
 
-import android.annotation.TargetApiimport
-
 android.app.Instrumentationimport android.content.Contextimport android.hardware.display.DisplayManagerimport android.os.Handlerimport android.os.HandlerThreadimport android.os.Looperimport android.os.Messageimport android.view.Displayimport android.view.FrameMetricsimport android.view.ViewTreeObserver.OnGlobalLayoutListenerimport android.view.Windowimport com.android.benchmark.results.GlobalResultsStoreimport com.android.benchmark.results.UiBenchmarkResultimport com.android.benchmark.ui.automation.CollectorThread.CollectorListenerimport java.util.LinkedListimport java.util.concurrent.atomic.AtomicInteger
 @TargetApi(24)
 class Automator(private var mTestName: String?, private var mRunId: Int, private var mIteration: Int,
@@ -43,8 +41,8 @@ class Automator(private var mTestName: String?, private var mRunId: Int, private
         private var mInteractions: MutableList<Interaction>? = null
     }
 
-    private class AutomatorHandler internal constructor(looper: Looper?, window: Window?, collectorThread: CollectorThread?,
-                                                        callback: AutomateCallback?, testName: String?, runId: Int, iteration: Int) : Handler(looper!!) {
+    private class AutomatorHandler(looper: Looper?, window: Window?, collectorThread: CollectorThread?,
+                                   callback: AutomateCallback?, testName: String?, runId: Int, iteration: Int) : Handler(looper!!) {
         private val mTestName: String?
         private val mRunId: Int
         private val mIteration: Int

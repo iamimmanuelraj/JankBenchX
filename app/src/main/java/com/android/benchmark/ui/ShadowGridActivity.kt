@@ -15,8 +15,6 @@
  */
 package com.android.benchmark.ui
 
-import android.content.Intentimport
-
 android.os.Bundleimport android.view.Viewimport android.widget.ArrayAdapterimport android.widget.ListViewimport androidx.appcompat.app.AppCompatActivityimport androidx.fragment.app.ListFragmentimport com.android.benchmark.Rimport com.android.benchmark.ui.automation.Automatorimport com.android.benchmark.ui.automation.Automator.AutomateCallbackimport com.android.benchmark.ui.automation.Interaction
 class ShadowGridActivity : AppCompatActivity() {
     private var mAutomator: Automator? = null

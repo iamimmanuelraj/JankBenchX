@@ -79,7 +79,7 @@ open class ListViewScrollActivity : ListActivityBase() {
                 Utils.Companion.buildStringList(LIST_SIZE))
     }
 
-    protected override val name: String?
+    override val name: String?
         protected get() = getString(R.string.list_view_scroll_name)
 
     companion object {

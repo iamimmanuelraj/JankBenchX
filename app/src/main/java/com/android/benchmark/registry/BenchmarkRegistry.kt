@@ -23,10 +23,7 @@ import android.content.pm.PackageManager
 import android.util.SparseArray
 import android.util.Xml
 import com.android.benchmark.R
-import com.android.benchmark.registry.BenchmarkCategory
-import com.android.benchmark.registry.BenchmarkGroup
 import com.android.benchmark.registry.BenchmarkGroup.Benchmark
-import com.android.benchmark.registry.BenchmarkRegistry
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
@@ -151,7 +148,7 @@ class BenchmarkRegistry(private val mContext: Context) {
     }
 
     fun loadBenchmarks() {
-        val intent = Intent(BenchmarkRegistry.Companion.ACTION_BENCHMARK)
+        val intent = Intent(ACTION_BENCHMARK)
         intent.setPackage(mContext.packageName)
         val pm = mContext.packageManager
         val resolveInfos = pm.queryIntentActivities(intent,
@@ -192,8 +189,8 @@ class BenchmarkRegistry(private val mContext: Context) {
         var groupName: String
         var groupDescription: String
         try {
-            activityInfo.loadXmlMetaData(pm, BenchmarkRegistry.Companion.BENCHMARK_GROUP_META_KEY).use { parser ->
-                if (!seekToTag(parser, BenchmarkRegistry.Companion.TAG_BENCHMARK_GROUP)) {
+            activityInfo.loadXmlMetaData(pm, BENCHMARK_GROUP_META_KEY).use { parser ->
+                if (!seekToTag(parser, Companion.TAG_BENCHMARK_GROUP)) {
                     return null
                 }
                 val res = pm.getResourcesForActivity(componentName)
@@ -203,7 +200,7 @@ class BenchmarkRegistry(private val mContext: Context) {
                 groupDescription = groupAttribs.getString(R.styleable.BenchmarkGroup_description)
                 groupAttribs.recycle()
                 parser.next()
-                while (seekToTag(parser, BenchmarkRegistry.Companion.TAG_BENCHMARK)) {
+                while (seekToTag(parser, TAG_BENCHMARK)) {
                     val benchAttribs = res.obtainAttributes(Xml.asAttributeSet(parser), R.styleable.Benchmark)
                     val id = benchAttribs.getResourceId(R.styleable.Benchmark_id, -1)
                     val testName = benchAttribs.getString(R.styleable.Benchmark_name)
@@ -238,7 +235,7 @@ class BenchmarkRegistry(private val mContext: Context) {
             val benchmarkArray = arrayOfNulls<Benchmark>(thisGroup.size)
             thisGroup.toArray<Benchmark>(benchmarkArray)
             result.add(BenchmarkGroup(componentName,
-                    groupName + " - " + BenchmarkRegistry.Companion.getCategoryString(cat), groupDescription, benchmarkArray,
+                    groupName + " - " + getCategoryString(cat), groupDescription, benchmarkArray,
                     testIntent))
         }
         return result

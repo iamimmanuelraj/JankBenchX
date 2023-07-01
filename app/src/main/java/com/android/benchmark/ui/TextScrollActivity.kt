@@ -15,13 +15,11 @@
  */
 package com.android.benchmark.ui
 
-import android.content.Intentimport
-
 android.os.Bundleimport android.widget.ArrayAdapterimport android.widget.ListAdapterimport android.widget.ListViewimport com.android.benchmark.registry.BenchmarkRegistryimport com.android.benchmark.ui.automation.Automatorimport com.android.benchmark.ui.automation.Automator.AutomateCallbackimport com.android.benchmark.ui.automation.Interaction
 class TextScrollActivity : ListActivityBase() {
     private var mHitPercentage = 100
     private var mAutomator: Automator? = null
-    protected override var name: String? = null
+    override var name: String? = null
         private set
 
     override fun onCreate(savedInstanceState: Bundle?) {

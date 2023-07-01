@@ -39,6 +39,7 @@ class FullScreenOverdrawActivity : AppCompatActivity() {
     private inner class OverdrawView(context: Context?) : View(context) {
         var paint = Paint()
         var mColorValue = 0
+
         @Keep
         fun setColorValue(colorValue: Int) {
             mColorValue = colorValue

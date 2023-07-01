@@ -16,7 +16,6 @@
 package com.android.benchmark.resultsimport
 
 import android.view.FrameMetrics
-import com.android.benchmark.results.UiBenchmarkResult
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 
@@ -139,13 +138,13 @@ class UiBenchmarkResult {
 
     constructor(instances: List<FrameMetrics>, refresh_rate: Int) {
         initializeThresholds(refresh_rate)
-        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(UiBenchmarkResult.Companion.METRICS.size)
+        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(METRICS.size)
         insertMetrics(instances)
     }
 
     constructor(values: DoubleArray, refresh_rate: Int) {
         initializeThresholds(refresh_rate)
-        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(UiBenchmarkResult.Companion.METRICS.size)
+        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(METRICS.size)
         insertValues(values)
     }
 
@@ -298,8 +297,8 @@ class UiBenchmarkResult {
     }
 
     private fun getMetricPosition(id: Int): Int {
-        for (i in UiBenchmarkResult.Companion.METRICS.indices) {
-            if (id == UiBenchmarkResult.Companion.METRICS.get(i)) {
+        for (i in METRICS.indices) {
+            if (id == METRICS.get(i)) {
                 return i
             }
         }
@@ -308,19 +307,19 @@ class UiBenchmarkResult {
 
     private fun insertMetrics(instances: List<FrameMetrics>) {
         for (frame in instances) {
-            for (i in UiBenchmarkResult.Companion.METRICS.indices) {
+            for (i in METRICS.indices) {
                 var stats = mStoredStatistics[i]
                 if (null == stats) {
                     stats = DescriptiveStatistics()
                     mStoredStatistics[i] = stats
                 }
-                mStoredStatistics[i]!!.addValue(frame.getMetric(UiBenchmarkResult.Companion.METRICS.get(i)) / 1000000.0)
+                mStoredStatistics[i]!!.addValue(frame.getMetric(METRICS.get(i)) / 1000000.0)
             }
         }
     }
 
     private fun insertValues(values: DoubleArray) {
-        require(values.size == UiBenchmarkResult.Companion.METRICS.size) { "invalid values array" }
+        require(values.size == METRICS.size) { "invalid values array" }
         for (i in values.indices) {
             var stats = mStoredStatistics[i]
             if (null == stats) {

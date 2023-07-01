@@ -15,7 +15,7 @@
  */
 package com.android.benchmark.ui.automationimport
 
-import androidx.annotation.IntDefimport
+import androidx.annotation.IntDef
 
 com.android.benchmark.ui.automation.FrameTimingStatsimport java.io.DataInputStreamimport java.io.IOExceptionimport java.util.Arrays android.annotation .TargetApi
 import com.android.benchmark.ui.automation.Automator.AutomateCallback
@@ -121,7 +121,7 @@ import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
 import android.view.WindowManager
 
 class FrameTimingStats {
-    @IntDef([FrameTimingStats.Index.Companion.FLAGS, FrameTimingStats.Index.Companion.INTENDED_VSYNC, FrameTimingStats.Index.Companion.VSYNC, FrameTimingStats.Index.Companion.OLDEST_INPUT_EVENT, FrameTimingStats.Index.Companion.NEWEST_INPUT_EVENT, FrameTimingStats.Index.Companion.HANDLE_INPUT_START, FrameTimingStats.Index.Companion.ANIMATION_START, FrameTimingStats.Index.Companion.PERFORM_TRAVERSALS_START, FrameTimingStats.Index.Companion.DRAW_START, FrameTimingStats.Index.Companion.SYNC_QUEUED, FrameTimingStats.Index.Companion.SYNC_START, FrameTimingStats.Index.Companion.ISSUE_DRAW_COMMANDS_START, FrameTimingStats.Index.Companion.SWAP_BUFFERS, FrameTimingStats.Index.Companion.FRAME_COMPLETED])
+    @IntDef([Index.Companion.FLAGS, Index.Companion.INTENDED_VSYNC, Index.Companion.VSYNC, Index.Companion.OLDEST_INPUT_EVENT, Index.Companion.NEWEST_INPUT_EVENT, Index.Companion.HANDLE_INPUT_START, Index.Companion.ANIMATION_START, Index.Companion.PERFORM_TRAVERSALS_START, Index.Companion.DRAW_START, Index.Companion.SYNC_QUEUED, Index.Companion.SYNC_START, Index.Companion.ISSUE_DRAW_COMMANDS_START, Index.Companion.SWAP_BUFFERS, Index.Companion.FRAME_COMPLETED])
     annotation class Index {
         companion object {
             var FLAGS = 0
@@ -145,11 +145,11 @@ class FrameTimingStats {
     private val mStats: LongArray
 
     internal constructor(stats: LongArray) {
-        mStats = Arrays.copyOf(stats, FrameTimingStats.Index.Companion.FRAME_STATS_COUNT)
+        mStats = Arrays.copyOf(stats, Index.Companion.FRAME_STATS_COUNT)
     }
 
     constructor(inputStream: DataInputStream) {
-        mStats = LongArray(FrameTimingStats.Index.Companion.FRAME_STATS_COUNT)
+        mStats = LongArray(Index.Companion.FRAME_STATS_COUNT)
         update(inputStream)
     }
 
@@ -160,7 +160,7 @@ class FrameTimingStats {
         }
     }
 
-    operator fun get(@FrameTimingStats.Index index: Int): Long {
+    operator fun get(@Index index: Int): Long {
         return mStats[index]
     }
 

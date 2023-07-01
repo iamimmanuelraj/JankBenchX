@@ -4,11 +4,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.view.FrameMetrics
-import com.android.benchmark.api.JankBenchAPI
-import com.android.benchmark.api.JankBenchService
 import com.android.benchmark.config.Constants
 import com.android.benchmark.models.Entry
-import com.android.benchmark.models.Result
 import com.android.benchmark.results.GlobalResultsStore
 import com.android.benchmark.results.UiBenchmarkResult
 import com.topjohnwu.superuser.Shell

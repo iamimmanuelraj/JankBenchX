@@ -31,9 +31,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.ListFragment
 import com.android.benchmark.R
 import com.android.benchmark.api.JankBenchAPI
-import com.android.benchmark.app.RunLocalBenchmarksActivity
-import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
-import com.android.benchmark.app.UiResultsFragment
 import com.android.benchmark.config.Constants
 import com.android.benchmark.registry.BenchmarkGroup
 import com.android.benchmark.registry.BenchmarkRegistry
@@ -206,19 +203,19 @@ class RunLocalBenchmarksActivity : AppCompatActivity() {
     }
 
     private fun translateBenchmarkIndex(index: Int): Int {
-        return if (0 <= index && index < RunLocalBenchmarksActivity.Companion.ALL_TESTS.size) {
-            RunLocalBenchmarksActivity.Companion.ALL_TESTS.get(index)
+        return if (0 <= index && index < ALL_TESTS.size) {
+            ALL_TESTS.get(index)
         } else -1
     }
 
     private fun initLocalBenchmarks(intent: Intent) {
         mBenchmarksToRun = ArrayList()
         var enabledIds = intent.getIntArrayExtra(BenchmarkGroup.Companion.BENCHMARK_EXTRA_ENABLED_TESTS)
-        val runCount = intent.getIntExtra(BenchmarkGroup.Companion.BENCHMARK_EXTRA_RUN_COUNT, RunLocalBenchmarksActivity.Companion.RUN_COUNT)
+        val runCount = intent.getIntExtra(BenchmarkGroup.Companion.BENCHMARK_EXTRA_RUN_COUNT, RUN_COUNT)
         mFinish = intent.getBooleanExtra(BenchmarkGroup.Companion.BENCHMARK_EXTRA_FINISH, false)
         if (null == enabledIds) {
             // run all tests
-            enabledIds = RunLocalBenchmarksActivity.Companion.ALL_TESTS
+            enabledIds = ALL_TESTS
         }
         val idString = StringBuilder()
         idString.append(runCount)
@@ -226,13 +223,13 @@ class RunLocalBenchmarksActivity : AppCompatActivity() {
         for (i in enabledIds.indices) {
             var id = enabledIds[i]
             println("considering $id")
-            if (!RunLocalBenchmarksActivity.Companion.isValidBenchmark(id)) {
+            if (!isValidBenchmark(id)) {
                 println("not valid $id")
                 id = translateBenchmarkIndex(id)
                 println("got out $id")
                 println("expected: " + R.id.benchmark_overdraw)
             }
-            if (RunLocalBenchmarksActivity.Companion.isValidBenchmark(id)) {
+            if (isValidBenchmark(id)) {
                 var localRunCount = runCount
                 if (isCompute(id)) {
                     localRunCount = 1

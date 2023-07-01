@@ -19,9 +19,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.view.View
 import android.widget.CheckBox
-import com.android.benchmark.registry.BenchmarkCategory
-import com.android.benchmark.registry.BenchmarkGroup
-import com.android.benchmark.registry.BenchmarkGroup.Benchmark
 
 android.annotation .TargetApi
 import com.android.benchmark.ui.automation.Automator.AutomateCallback
@@ -189,7 +186,7 @@ class BenchmarkGroup internal constructor(
     fun getIntent(): Intent? {
         val enabledBenchmarksIds = getEnabledBenchmarksIds()
         if (0 != enabledBenchmarksIds.size) {
-            mIntent.putExtra(BenchmarkGroup.Companion.BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds)
+            mIntent.putExtra(BENCHMARK_EXTRA_ENABLED_TESTS, enabledBenchmarksIds)
             return mIntent
         }
         return null

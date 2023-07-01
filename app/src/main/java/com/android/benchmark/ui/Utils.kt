@@ -15,8 +15,6 @@
  */
 package com.android.benchmark.ui
 
-import android.content.res.Resourcesimport
-
 android.graphics.Bitmapimport android.graphics.BitmapFactoryimport java.util.Random
 enum class Utils {
     ;

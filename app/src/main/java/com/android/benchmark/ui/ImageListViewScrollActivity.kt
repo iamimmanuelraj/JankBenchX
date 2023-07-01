@@ -33,7 +33,7 @@ class ImageListViewScrollActivity : ListViewScrollActivity() {
         return ImageListAdapter()
     }
 
-    protected override val name: String?
+    override val name: String?
         protected get() = getString(R.string.image_list_view_scroll_name)
 
     internal inner class BitmapWorkerTask(imageView: ImageView, cacheIdx: Int) : AsyncTask<Int?, Void?, Bitmap?>() {

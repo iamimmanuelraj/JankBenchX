@@ -17,9 +17,6 @@ package com.android.benchmark.syntheticimport
 
 import android.view.View
 import android.widget.TextView
-import com.android.benchmark.synthetic.TestInterface
-import com.android.benchmark.synthetic.TestInterface.LooperThread
-import com.android.benchmark.synthetic.TestInterface.TestResultCallback
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import java.util.LinkedList
 import java.util.Queue

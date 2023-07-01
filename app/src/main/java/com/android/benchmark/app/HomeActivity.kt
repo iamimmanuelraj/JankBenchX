@@ -29,7 +29,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.android.benchmark.R
 import com.android.benchmark.api.JankBenchAPI
-import com.android.benchmark.app.BenchmarkListAdapter
 import com.android.benchmark.config.Constants
 import com.android.benchmark.registry.BenchmarkRegistry
 import com.android.benchmark.results.GlobalResultsStore
@@ -228,10 +227,6 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
         handleNextBenchmark()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun handleNextBenchmark() {

@@ -25,7 +25,6 @@ import android.view.WindowManager
 import android.widget.TextView
 import com.android.benchmark.R
 import com.android.benchmark.app.PerfTimeline
-import com.android.benchmark.synthetic.TestInterface
 import com.android.benchmark.synthetic.TestInterface.TestResultCallback
 
 android.annotation .TargetApi

@@ -15,14 +15,12 @@
  */
 package com.android.benchmark.ui
 
-import android.os.Bundleimport
-
 android.widget.ListAdapterimport androidx.appcompat.app.AppCompatActivityimport androidx.fragment.app.ListFragmentimport com.android.benchmark.R
 /**
  * Simple list activity base class
  */
 abstract class ListActivityBase : AppCompatActivity() {
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list_fragment)
         val actionBar = actionBar

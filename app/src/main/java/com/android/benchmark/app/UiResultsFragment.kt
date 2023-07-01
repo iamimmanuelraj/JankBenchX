@@ -21,7 +21,6 @@ import android.view.FrameMetrics
 import android.widget.SimpleAdapter
 import androidx.fragment.app.ListFragment
 import com.android.benchmark.R
-import com.android.benchmark.app.UiResultsFragment
 import com.android.benchmark.results.GlobalResultsStore
 import com.android.benchmark.results.UiBenchmarkResult
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
@@ -140,7 +139,7 @@ class UiResultsFragment : ListFragment() {
                         "No metrics reported", ""
                 )
             } else {
-                data = arrayOfNulls<String>(UiResultsFragment.Companion.NUM_FIELDS * (1 + mResults.size) + 2)
+                data = arrayOfNulls<String>(NUM_FIELDS * (1 + mResults.size) + 2)
                 val stats = SummaryStatistics()
                 var totalFrameCount = 0
                 var totalAvgFrameDuration = 0.0
@@ -150,7 +149,7 @@ class UiResultsFragment : ListFragment() {
                 var totalLongestFrame = 0.0
                 var totalShortestFrame = 0.0
                 for (i in mResults.indices) {
-                    var start: Int = i * UiResultsFragment.Companion.NUM_FIELDS + +UiResultsFragment.Companion.NUM_FIELDS
+                    var start: Int = i * NUM_FIELDS + +NUM_FIELDS
                     data[start] = "Iteration"
                     start++
                     data[start] = i.toString()

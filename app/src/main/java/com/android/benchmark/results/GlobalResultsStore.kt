@@ -21,8 +21,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.view.FrameMetrics
 import android.widget.Toast
-import com.android.benchmark.results.GlobalResultsStore
-import com.android.benchmark.results.UiBenchmarkResult
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
 import java.io.FileWriter
 import java.io.IOException
@@ -132,9 +130,9 @@ import com.android.benchmark.app.PerfTimeline
 import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
 import android.view.WindowManager
 
-class GlobalResultsStore private constructor(private val mContext: Context) : SQLiteOpenHelper(mContext, "BenchmarkResults", null, GlobalResultsStore.Companion.VERSION) {
+class GlobalResultsStore private constructor(private val mContext: Context) : SQLiteOpenHelper(mContext, "BenchmarkResults", null, VERSION) {
     override fun onCreate(sqLiteDatabase: SQLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " (" +
+        sqLiteDatabase.execSQL("CREATE TABLE " + UI_RESULTS_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " name TEXT," +
                 " run_id INTEGER," +
@@ -151,7 +149,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                 " total_duration REAL," +
                 " jank_frame BOOLEAN, " +
                 " device_charging INTEGER);")
-        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.Companion.REFRESH_RATE_TABLE + " (" +
+        sqLiteDatabase.execSQL("CREATE TABLE " + REFRESH_RATE_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " run_id INTEGER," +
                 " refresh_rate INTEGER);")
@@ -197,14 +195,14 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                 } else {
                     cv.put("jank_frame", false)
                 }
-                db.insert(GlobalResultsStore.Companion.UI_RESULTS_TABLE, null, cv)
+                db.insert(UI_RESULTS_TABLE, null, cv)
             }
 
             // Store Display Refresh Rate
             val cv = ContentValues()
             cv.put("run_id", runId)
             cv.put("refresh_rate", Math.round(refresh_rate))
-            db.insert(GlobalResultsStore.Companion.REFRESH_RATE_TABLE, null, cv)
+            db.insert(REFRESH_RATE_TABLE, null, cv)
             db.setTransactionSuccessful()
             Toast.makeText(mContext, ("Score: " + result.score
                     + " Jank: ") + 100 * sortedJankIndices.size / totalFrameCount.toFloat() + "%",
@@ -232,7 +230,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                     "swap_buffers",
                     "total_duration")
             val cursor = db.query(
-                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?", arrayOf<String>(Integer.toString(runId), testName), null, null, "iteration")
+                    UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?", arrayOf<String>(Integer.toString(runId), testName), null, null, "iteration")
             val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
                 val iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"))
@@ -293,7 +291,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                     "swap_buffers",
                     "total_duration")
             val cursor = db.query(
-                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name, iteration")
+                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name, iteration")
             val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
                 val iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"))
@@ -344,7 +342,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
         var runId = 0
         val db = readableDatabase
         try {
-            val query = "SELECT run_id FROM " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + ")"
+            val query = "SELECT run_id FROM " + UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + UI_RESULTS_TABLE + ")"
             val cursor = db.rawQuery(query, null)
             if (cursor.moveToFirst()) {
                 runId = cursor.getInt(0)
@@ -362,7 +360,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                 "run_id",
                 "refresh_rate"
         )
-        val cursor = db.query(GlobalResultsStore.Companion.REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, null)
+        val cursor = db.query(REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, null)
         if (cursor.moveToFirst()) {
             refresh_rate = cursor.getInt(1)
         }
@@ -388,7 +386,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
                     "swap_buffers",
                     "total_duration")
             val cursor = db.query(
-                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name")
+                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name")
             val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
                 val testName = cursor.getString(cursor.getColumnIndexOrThrow("name"))
@@ -436,7 +434,7 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
         // stats across metrics for each run and each test
         val stats = HashMap<String, DescriptiveStatistics>()
         val runIdCursor = db.query(
-                GlobalResultsStore.Companion.UI_RESULTS_TABLE, arrayOf<String>("run_id"), null, null, "run_id", null, null)
+                UI_RESULTS_TABLE, arrayOf<String>("run_id"), null, null, "run_id", null, null)
         while (runIdCursor.moveToNext()) {
             val runId = runIdCursor.getInt(runIdCursor.getColumnIndexOrThrow("run_id"))
             val detailedResults = loadDetailedResults(runId)
@@ -527,9 +525,9 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, currentVersion: Int) {
-        if (GlobalResultsStore.Companion.VERSION > oldVersion) {
+        if (VERSION > oldVersion) {
             sqLiteDatabase.execSQL("ALTER TABLE "
-                    + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;")
+                    + UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;")
         }
     }
 
@@ -539,10 +537,10 @@ class GlobalResultsStore private constructor(private val mContext: Context) : SQ
         private const val UI_RESULTS_TABLE = "ui_results"
         private const val REFRESH_RATE_TABLE = "refresh_rates"
         fun getInstance(context: Context): GlobalResultsStore {
-            if (null == GlobalResultsStore.Companion.sInstance) {
-                GlobalResultsStore.Companion.sInstance = GlobalResultsStore(context.applicationContext)
+            if (null == sInstance) {
+                sInstance = GlobalResultsStore(context.applicationContext)
             }
-            return GlobalResultsStore.Companion.sInstance
+            return sInstance
         }
     }
 }

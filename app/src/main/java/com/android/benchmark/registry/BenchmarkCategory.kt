@@ -16,7 +16,6 @@
 package com.android.benchmark.registryimport
 
 import androidx.annotation.IntDef
-import com.android.benchmark.registry.BenchmarkCategory
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 

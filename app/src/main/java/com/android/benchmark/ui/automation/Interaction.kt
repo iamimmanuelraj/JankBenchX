@@ -15,8 +15,6 @@
  */
 package com.android.benchmark.ui.automation
 
-import android.os.SystemClockimport
-
 android.view.MotionEventimport androidx.annotation .IntDef
 /**
  * Encodes a UI interaction as a series of MotionEvents
