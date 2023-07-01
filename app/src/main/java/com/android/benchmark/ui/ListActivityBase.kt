@@ -13,43 +13,30 @@
  * License.
  *
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.os.Bundleimport
 
-import android.app.ActionBar;
-import android.os.Bundle;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.ListFragment;
-import androidx.appcompat.app.AppCompatActivity;
-import android.view.Window;
-import android.widget.ListAdapter;
-
-import com.android.benchmark.R;
-
+android.widget.ListAdapterimport androidx.appcompat.app.AppCompatActivityimport androidx.fragment.app.ListFragmentimport com.android.benchmark.R
 /**
  * Simple list activity base class
  */
-public abstract class ListActivityBase extends AppCompatActivity {
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list_fragment);
-
-        ActionBar actionBar = getActionBar();
+abstract class ListActivityBase : AppCompatActivity() {
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_list_fragment)
+        val actionBar = actionBar
         if (null != actionBar) {
-            actionBar.setTitle(getName());
+            actionBar.title = name
         }
-
-        if (null != this.findViewById(R.id.list_fragment_container)) {
-            FragmentManager fm = getSupportFragmentManager();
-            ListFragment listView = new ListFragment();
-            listView.setListAdapter(createListAdapter());
-            fm.beginTransaction().add(R.id.list_fragment_container, listView).commit();
+        if (null != findViewById(R.id.list_fragment_container)) {
+            val fm = supportFragmentManager
+            val listView = ListFragment()
+            listView.listAdapter = createListAdapter()
+            fm.beginTransaction().add(R.id.list_fragment_container, listView).commit()
         }
     }
 
-    protected abstract ListAdapter createListAdapter();
-    protected abstract String getName();
+    protected abstract fun createListAdapter(): ListAdapter
+    protected abstract val name: String?
 }
-

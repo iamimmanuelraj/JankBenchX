@@ -13,157 +13,129 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.graphics.Bitmap
+import android.os.AsyncTask
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import android.widget.ImageView
+import android.widget.ListAdapter
+import android.widget.TextView
+import com.android.benchmark.R
+import java.lang.ref.WeakReference
 
-import android.graphics.Bitmap;
-import android.os.AsyncTask;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListAdapter;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.android.benchmark.R;
-
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-
-public class ImageListViewScrollActivity extends ListViewScrollActivity {
-
-    private static final int LIST_SIZE = 100;
-
-    private static final int[] IMG_RES_ID = {
-            R.drawable.img1,
-            R.drawable.img2,
-            R.drawable.img3,
-            R.drawable.img4,
-            R.drawable.img1,
-            R.drawable.img2,
-            R.drawable.img3,
-            R.drawable.img4,
-            R.drawable.img1,
-            R.drawable.img2,
-            R.drawable.img3,
-            R.drawable.img4,
-            R.drawable.img1,
-            R.drawable.img2,
-            R.drawable.img3,
-            R.drawable.img4,
-    };
-
-    private static final Bitmap[] mBitmapCache = new Bitmap[IMG_RES_ID.length];
-
-    private static final String[] WORDS = Utils.buildStringList(LIST_SIZE);
-
-    private final HashMap<View, BitmapWorkerTask> mInFlight = new HashMap<>();
-
-    @NonNull
-    @Override
-    protected ListAdapter createListAdapter() {
-        return new ImageListAdapter();
+class ImageListViewScrollActivity : ListViewScrollActivity() {
+    private val mInFlight = HashMap<View?, BitmapWorkerTask>()
+    override fun createListAdapter(): ListAdapter {
+        return ImageListAdapter()
     }
 
-    @Override
-    protected String getName() {
-        return getString(R.string.image_list_view_scroll_name);
-    }
+    protected override val name: String?
+        protected get() = getString(R.string.image_list_view_scroll_name)
 
-    class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
-        @NonNull
-        private final WeakReference<ImageView> imageViewReference;
-        private int data;
-        private final int cacheIdx;
-        volatile boolean cancelled;
+    internal inner class BitmapWorkerTask(imageView: ImageView, cacheIdx: Int) : AsyncTask<Int?, Void?, Bitmap?>() {
+        private val imageViewReference: WeakReference<ImageView>
+        private var data = 0
+        private val cacheIdx: Int
 
-        public BitmapWorkerTask(ImageView imageView, int cacheIdx) {
+        @Volatile
+        var cancelled = false
+
+        init {
             // Use a WeakReference to ensure the ImageView can be garbage collected
-            imageViewReference = new WeakReference<>(imageView);
-            this.cacheIdx = cacheIdx;
+            imageViewReference = WeakReference(imageView)
+            this.cacheIdx = cacheIdx
         }
 
         // Decode image in background.
-        @Override
-        protected Bitmap doInBackground(@NonNull Integer... params) {
-            data = params[0];
-            return Utils.decodeSampledBitmapFromResource(getResources(), data, 100, 100);
+        protected override fun doInBackground(vararg params: Int): Bitmap {
+            data = params[0]
+            return Utils.Companion.decodeSampledBitmapFromResource(resources, data, 100, 100)
         }
 
         // Once complete, see if ImageView is still around and set bitmap.
-        @Override
-        protected void onPostExecute(@Nullable Bitmap bitmap) {
+        override fun onPostExecute(bitmap: Bitmap?) {
             if (null != bitmap) {
-                final ImageView imageView = imageViewReference.get();
+                val imageView = imageViewReference.get()
                 if (null != imageView) {
                     if (!cancelled) {
-                        imageView.setImageBitmap(bitmap);
+                        imageView.setImageBitmap(bitmap)
                     }
-                    mBitmapCache[cacheIdx] = bitmap;
+                    mBitmapCache[cacheIdx] = bitmap
                 }
             }
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        for (int i = 0; i < mBitmapCache.length; i++) {
-            mBitmapCache[i] = null;
+    override fun onPause() {
+        super.onPause()
+        for (i in mBitmapCache.indices) {
+            mBitmapCache[i] = null
         }
     }
 
-    class ImageListAdapter extends BaseAdapter {
-
-        @Override
-        public int getCount() {
-            return LIST_SIZE;
+    internal inner class ImageListAdapter : BaseAdapter() {
+        override fun getCount(): Int {
+            return LIST_SIZE
         }
 
-        @Nullable
-        @Override
-        public Object getItem(int postition) {
-            return null;
+        override fun getItem(postition: Int): Any? {
+            return null
         }
 
-        @Override
-        public long getItemId(int postition) {
-            return postition;
+        override fun getItemId(postition: Int): Long {
+            return postition.toLong()
         }
 
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, ViewGroup parent) {
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            var convertView = convertView
             if (null == convertView) {
-                convertView = LayoutInflater.from(getBaseContext())
-                        .inflate(R.layout.image_scroll_list_item, parent, false);
+                convertView = LayoutInflater.from(baseContext)
+                        .inflate(R.layout.image_scroll_list_item, parent, false)
             }
-
-            ImageView imageView = convertView.findViewById(R.id.image_scroll_image);
-            BitmapWorkerTask inFlight = mInFlight.get(convertView);
+            val imageView = convertView!!.findViewById<ImageView>(R.id.image_scroll_image)
+            val inFlight = mInFlight[convertView]
             if (null != inFlight) {
-                inFlight.cancelled = true;
-                mInFlight.remove(convertView);
+                inFlight.cancelled = true
+                mInFlight.remove(convertView)
             }
-
-            int cacheIdx = position % IMG_RES_ID.length;
-            Bitmap bitmap = mBitmapCache[(cacheIdx)];
+            val cacheIdx = position % IMG_RES_ID.size
+            val bitmap = mBitmapCache[cacheIdx]
             if (null == bitmap) {
-                BitmapWorkerTask bitmapWorkerTask = new BitmapWorkerTask(imageView, cacheIdx);
-                bitmapWorkerTask.execute(IMG_RES_ID[(cacheIdx)]);
-                mInFlight.put(convertView, bitmapWorkerTask);
+                val bitmapWorkerTask = BitmapWorkerTask(imageView, cacheIdx)
+                bitmapWorkerTask.execute(IMG_RES_ID[cacheIdx])
+                mInFlight[convertView] = bitmapWorkerTask
             }
-
-            imageView.setImageBitmap(bitmap);
-
-            TextView textView = convertView.findViewById(R.id.image_scroll_text);
-            textView.setText(WORDS[position]);
-
-            return convertView;
+            imageView.setImageBitmap(bitmap)
+            val textView = convertView.findViewById<TextView>(R.id.image_scroll_text)
+            textView.text = WORDS[position]
+            return convertView
         }
+    }
+
+    companion object {
+        private const val LIST_SIZE = 100
+        private val IMG_RES_ID = intArrayOf(
+                R.drawable.img1,
+                R.drawable.img2,
+                R.drawable.img3,
+                R.drawable.img4,
+                R.drawable.img1,
+                R.drawable.img2,
+                R.drawable.img3,
+                R.drawable.img4,
+                R.drawable.img1,
+                R.drawable.img2,
+                R.drawable.img3,
+                R.drawable.img4,
+                R.drawable.img1,
+                R.drawable.img2,
+                R.drawable.img3,
+                R.drawable.img4)
+        private val mBitmapCache = arrayOfNulls<Bitmap>(IMG_RES_ID.size)
+        private val WORDS: Array<String?> = Utils.Companion.buildStringList(LIST_SIZE)
     }
 }

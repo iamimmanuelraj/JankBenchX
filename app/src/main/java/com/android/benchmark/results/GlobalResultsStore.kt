@@ -13,62 +13,133 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.resultsimport
 
-package com.android.benchmark.results;
+import android.content.ContentValues
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
+import android.view.FrameMetrics
+import android.widget.Toast
+import com.android.benchmark.results.GlobalResultsStore
+import com.android.benchmark.results.UiBenchmarkResult
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import java.io.FileWriter
+import java.io.IOException
+import java.text.DateFormat
+import java.util.Date
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.view.FrameMetrics;
-import android.widget.Toast;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
-import androidx.annotation.NonNull;
-
-import com.android.benchmark.models.Result;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
-public class GlobalResultsStore extends SQLiteOpenHelper {
-    private static final int VERSION = 2;
-
-    private static GlobalResultsStore sInstance;
-    private static final String UI_RESULTS_TABLE = "ui_results";
-    private static final String REFRESH_RATE_TABLE = "refresh_rates";
-
-    private final Context mContext;
-
-    private GlobalResultsStore(Context context) {
-        super(context, "BenchmarkResults", null, VERSION);
-        mContext = context;
-    }
-
-    @NonNull
-    public static GlobalResultsStore getInstance(@NonNull Context context) {
-        if (null == GlobalResultsStore.sInstance) {
-            sInstance = new GlobalResultsStore(context.getApplicationContext());
-        }
-
-        return sInstance;
-    }
-
-    @Override
-    public void onCreate(@NonNull SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE " + UI_RESULTS_TABLE + " (" +
+class GlobalResultsStore private constructor(private val mContext: Context) : SQLiteOpenHelper(mContext, "BenchmarkResults", null, GlobalResultsStore.Companion.VERSION) {
+    override fun onCreate(sqLiteDatabase: SQLiteDatabase) {
+        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " name TEXT," +
                 " run_id INTEGER," +
                 " iteration INTEGER," +
-                " timestamp TEXT,"  +
+                " timestamp TEXT," +
                 " unknown_delay REAL," +
                 " input REAL," +
                 " animation REAL," +
@@ -79,80 +150,75 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                 " swap_buffers REAL," +
                 " total_duration REAL," +
                 " jank_frame BOOLEAN, " +
-                " device_charging INTEGER);");
-
-        sqLiteDatabase.execSQL("CREATE TABLE " + REFRESH_RATE_TABLE + " (" +
+                " device_charging INTEGER);")
+        sqLiteDatabase.execSQL("CREATE TABLE " + GlobalResultsStore.Companion.REFRESH_RATE_TABLE + " (" +
                 " _id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 " run_id INTEGER," +
-                " refresh_rate INTEGER);");
+                " refresh_rate INTEGER);")
     }
 
-    public void storeRunResults(String testName, int runId, int iteration,
-                                @NonNull UiBenchmarkResult result, float refresh_rate) {
-        SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
-
+    fun storeRunResults(testName: String?, runId: Int, iteration: Int,
+                        result: UiBenchmarkResult, refresh_rate: Float) {
+        val db = writableDatabase
+        db.beginTransaction()
         try {
-            String date = DateFormat.getDateTimeInstance().format(new Date());
-            int jankIndexIndex = 0;
-            int[] sortedJankIndices = result.getSortedJankFrameIndices();
-            int totalFrameCount = result.getTotalFrameCount();
-            for (int frameIdx = 0; frameIdx < totalFrameCount; frameIdx++) {
-                ContentValues cv = new ContentValues();
-                cv.put("name", testName);
-                cv.put("run_id", runId);
-                cv.put("iteration", iteration);
-                cv.put("timestamp", date);
+            val date = DateFormat.getDateTimeInstance().format(Date())
+            var jankIndexIndex = 0
+            val sortedJankIndices = result.sortedJankFrameIndices
+            val totalFrameCount = result.totalFrameCount
+            for (frameIdx in 0 until totalFrameCount) {
+                val cv = ContentValues()
+                cv.put("name", testName)
+                cv.put("run_id", runId)
+                cv.put("iteration", iteration)
+                cv.put("timestamp", date)
                 cv.put("unknown_delay",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.UNKNOWN_DELAY_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.UNKNOWN_DELAY_DURATION))
                 cv.put("input",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.INPUT_HANDLING_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.INPUT_HANDLING_DURATION))
                 cv.put("animation",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.ANIMATION_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.ANIMATION_DURATION))
                 cv.put("layout",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.LAYOUT_MEASURE_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.LAYOUT_MEASURE_DURATION))
                 cv.put("draw",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.DRAW_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.DRAW_DURATION))
                 cv.put("sync",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.SYNC_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.SYNC_DURATION))
                 cv.put("command_issue",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.COMMAND_ISSUE_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.COMMAND_ISSUE_DURATION))
                 cv.put("swap_buffers",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.SWAP_BUFFERS_DURATION));
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.SWAP_BUFFERS_DURATION))
                 cv.put("total_duration",
-                        result.getMetricAtIndex(frameIdx, FrameMetrics.TOTAL_DURATION));
-                if (jankIndexIndex < sortedJankIndices.length &&
+                        result.getMetricAtIndex(frameIdx, FrameMetrics.TOTAL_DURATION))
+                if (jankIndexIndex < sortedJankIndices.size &&
                         sortedJankIndices[jankIndexIndex] == frameIdx) {
-                    jankIndexIndex++;
-                    cv.put("jank_frame", true);
+                    jankIndexIndex++
+                    cv.put("jank_frame", true)
                 } else {
-                    cv.put("jank_frame", false);
+                    cv.put("jank_frame", false)
                 }
-                db.insert(UI_RESULTS_TABLE, null, cv);
+                db.insert(GlobalResultsStore.Companion.UI_RESULTS_TABLE, null, cv)
             }
 
             // Store Display Refresh Rate
-            ContentValues cv = new ContentValues();
-            cv.put("run_id", runId);
-            cv.put("refresh_rate", Math.round(refresh_rate));
-            db.insert(REFRESH_RATE_TABLE, null, cv);
-
-            db.setTransactionSuccessful();
-            Toast.makeText(mContext, "Score: " + result.getScore()
-                    + " Jank: " + (100 * sortedJankIndices.length) / (float) totalFrameCount + "%",
-                    Toast.LENGTH_LONG).show();
+            val cv = ContentValues()
+            cv.put("run_id", runId)
+            cv.put("refresh_rate", Math.round(refresh_rate))
+            db.insert(GlobalResultsStore.Companion.REFRESH_RATE_TABLE, null, cv)
+            db.setTransactionSuccessful()
+            Toast.makeText(mContext, ("Score: " + result.score
+                    + " Jank: ") + 100 * sortedJankIndices.size / totalFrameCount.toFloat() + "%",
+                    Toast.LENGTH_LONG).show()
         } finally {
-            db.endTransaction();
+            db.endTransaction()
         }
-
     }
 
-    @NonNull
-    public ArrayList<UiBenchmarkResult> loadTestResults(String testName, int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        ArrayList<UiBenchmarkResult> resultList = new ArrayList<>();
+    fun loadTestResults(testName: String, runId: Int): ArrayList<UiBenchmarkResult> {
+        val db = readableDatabase
+        val resultList = ArrayList<UiBenchmarkResult>()
         try {
-            String[] columnsToQuery = {
+            val columnsToQuery = arrayOf(
                     "name",
                     "run_id",
                     "iteration",
@@ -164,67 +230,56 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "sync",
                     "command_issue",
                     "swap_buffers",
-                    "total_duration",
-            };
-
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?",
-                    new String[] { Integer.toString(runId), testName }, null, null, "iteration");
-
-            double[] values = new double[columnsToQuery.length - 3];
-
+                    "total_duration")
+            val cursor = db.query(
+                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=? AND name=?", arrayOf<String>(Integer.toString(runId), testName), null, null, "iteration")
+            val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
-                int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
-
+                val iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"))
                 values[0] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("unknown_delay"));
+                        cursor.getColumnIndexOrThrow("unknown_delay"))
                 values[1] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("input"));
+                        cursor.getColumnIndexOrThrow("input"))
                 values[2] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("animation"));
+                        cursor.getColumnIndexOrThrow("animation"))
                 values[3] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("layout"));
+                        cursor.getColumnIndexOrThrow("layout"))
                 values[4] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("draw"));
+                        cursor.getColumnIndexOrThrow("draw"))
                 values[5] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("sync"));
+                        cursor.getColumnIndexOrThrow("sync"))
                 values[6] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("command_issue"));
+                        cursor.getColumnIndexOrThrow("command_issue"))
                 values[7] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("swap_buffers"));
+                        cursor.getColumnIndexOrThrow("swap_buffers"))
                 values[8] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("total_duration"));
-
-                UiBenchmarkResult iterationResult;
-                if (resultList.size() == iteration) {
-                    int refresh_rate = loadRefreshRate(runId, db);
-                    iterationResult = new UiBenchmarkResult(values, refresh_rate);
-                    resultList.add(iteration, iterationResult);
+                        cursor.getColumnIndexOrThrow("total_duration"))
+                var iterationResult: UiBenchmarkResult
+                if (resultList.size == iteration) {
+                    val refresh_rate = loadRefreshRate(runId, db)
+                    iterationResult = UiBenchmarkResult(values, refresh_rate)
+                    resultList.add(iteration, iterationResult)
                 } else {
-                    iterationResult = resultList.get(iteration);
-                    iterationResult.update(values);
+                    iterationResult = resultList[iteration]
+                    iterationResult.update(values)
                 }
             }
-
-            cursor.close();
+            cursor.close()
         } finally {
-            db.close();
+            db.close()
         }
-
-        int total = resultList.get(0).getTotalFrameCount();
-        for (int i = 0; i < total; i++) {
-            System.out.println(resultList.get(0).getMetricAtIndex(0, FrameMetrics.TOTAL_DURATION));
+        val total = resultList[0].totalFrameCount
+        for (i in 0 until total) {
+            println(resultList[0].getMetricAtIndex(0, FrameMetrics.TOTAL_DURATION))
         }
-
-        return resultList;
+        return resultList
     }
 
-    @NonNull
-    public HashMap<String, ArrayList<UiBenchmarkResult>> loadDetailedResults(int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        HashMap<String, ArrayList<UiBenchmarkResult>> results = new HashMap<>();
+    fun loadDetailedResults(runId: Int): HashMap<String, ArrayList<UiBenchmarkResult>> {
+        val db = readableDatabase
+        val results = HashMap<String, ArrayList<UiBenchmarkResult>>()
         try {
-            String[] columnsToQuery = {
+            val columnsToQuery = arrayOf(
                     "name",
                     "run_id",
                     "iteration",
@@ -236,102 +291,90 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "sync",
                     "command_issue",
                     "swap_buffers",
-                    "total_duration",
-            };
-
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
-                    new String[] { Integer.toString(runId) }, null, null, "name, iteration");
-
-            double[] values = new double[columnsToQuery.length - 3];
+                    "total_duration")
+            val cursor = db.query(
+                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name, iteration")
+            val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
-                int iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-                ArrayList<UiBenchmarkResult> resultList = results.get(name);
+                val iteration = cursor.getInt(cursor.getColumnIndexOrThrow("iteration"))
+                val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+                var resultList = results[name]
                 if (null == resultList) {
-                    resultList = new ArrayList<>();
-                    results.put(name, resultList);
+                    resultList = ArrayList()
+                    results[name] = resultList
                 }
-
                 values[0] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("unknown_delay"));
+                        cursor.getColumnIndexOrThrow("unknown_delay"))
                 values[1] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("input"));
+                        cursor.getColumnIndexOrThrow("input"))
                 values[2] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("animation"));
+                        cursor.getColumnIndexOrThrow("animation"))
                 values[3] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("layout"));
+                        cursor.getColumnIndexOrThrow("layout"))
                 values[4] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("draw"));
+                        cursor.getColumnIndexOrThrow("draw"))
                 values[5] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("sync"));
+                        cursor.getColumnIndexOrThrow("sync"))
                 values[6] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("command_issue"));
+                        cursor.getColumnIndexOrThrow("command_issue"))
                 values[7] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("swap_buffers"));
+                        cursor.getColumnIndexOrThrow("swap_buffers"))
                 values[8] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("total_duration"));
+                        cursor.getColumnIndexOrThrow("total_duration"))
                 values[8] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("total_duration"));
-
-                UiBenchmarkResult iterationResult;
-                if (resultList.size() == iteration) {
-                    int refresh_rate = loadRefreshRate(runId, db);
-                    iterationResult = new UiBenchmarkResult(values, refresh_rate);
-                    resultList.add(iterationResult);
+                        cursor.getColumnIndexOrThrow("total_duration"))
+                var iterationResult: UiBenchmarkResult
+                if (resultList.size == iteration) {
+                    val refresh_rate = loadRefreshRate(runId, db)
+                    iterationResult = UiBenchmarkResult(values, refresh_rate)
+                    resultList.add(iterationResult)
                 } else {
-                    iterationResult = resultList.get(iteration);
-                    iterationResult.update(values);
+                    iterationResult = resultList[iteration]
+                    iterationResult.update(values)
                 }
             }
-
-            cursor.close();
+            cursor.close()
         } finally {
-            db.close();
+            db.close()
         }
-
-        return results;
+        return results
     }
 
-    public int getLastRunId() {
-        int runId = 0;
-        SQLiteDatabase db = getReadableDatabase();
+    fun getLastRunId(): Int {
+        var runId = 0
+        val db = readableDatabase
         try {
-            final String query = "SELECT run_id FROM " + UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + UI_RESULTS_TABLE + ")";
-            Cursor cursor = db.rawQuery(query, null);
+            val query = "SELECT run_id FROM " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " WHERE _id = (SELECT MAX(_id) FROM " + GlobalResultsStore.Companion.UI_RESULTS_TABLE + ")"
+            val cursor = db.rawQuery(query, null)
             if (cursor.moveToFirst()) {
-                runId = cursor.getInt(0);
+                runId = cursor.getInt(0)
             }
-            cursor.close();
+            cursor.close()
         } finally {
-            db.close();
+            db.close()
         }
-
-        return runId;
+        return runId
     }
 
-    public int loadRefreshRate(int runId, @NonNull SQLiteDatabase db) {
-        int refresh_rate = -1;
-
-        final String[] columnsToQuery = {
+    fun loadRefreshRate(runId: Int, db: SQLiteDatabase): Int {
+        var refresh_rate = -1
+        val columnsToQuery = arrayOf(
                 "run_id",
                 "refresh_rate"
-        };
-        final Cursor cursor = db.query(GlobalResultsStore.REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", new String[] { Integer.toString(runId) }, null, null, null);
+        )
+        val cursor = db.query(GlobalResultsStore.Companion.REFRESH_RATE_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, null)
         if (cursor.moveToFirst()) {
-            refresh_rate = cursor.getInt((1));
+            refresh_rate = cursor.getInt(1)
         }
-        cursor.close();
-
-        return refresh_rate;
+        cursor.close()
+        return refresh_rate
     }
 
-    @NonNull
-    public HashMap<String, UiBenchmarkResult> loadDetailedAggregatedResults(int runId) {
-        SQLiteDatabase db = getReadableDatabase();
-        HashMap<String, UiBenchmarkResult> testsResults = new HashMap<>();
+    fun loadDetailedAggregatedResults(runId: Int): HashMap<String, UiBenchmarkResult> {
+        val db = readableDatabase
+        val testsResults = HashMap<String, UiBenchmarkResult>()
         try {
-            String[] columnsToQuery = {
+            val columnsToQuery = arrayOf(
                     "name",
                     "run_id",
                     "iteration",
@@ -343,169 +386,163 @@ public class GlobalResultsStore extends SQLiteOpenHelper {
                     "sync",
                     "command_issue",
                     "swap_buffers",
-                    "total_duration",
-            };
-
-            Cursor cursor = db.query(
-                    UI_RESULTS_TABLE, columnsToQuery, "run_id=?",
-                    new String[] { Integer.toString(runId) }, null, null, "name");
-
-            double[] values = new double[columnsToQuery.length - 3];
+                    "total_duration")
+            val cursor = db.query(
+                    GlobalResultsStore.Companion.UI_RESULTS_TABLE, columnsToQuery, "run_id=?", arrayOf<String>(Integer.toString(runId)), null, null, "name")
+            val values = DoubleArray(columnsToQuery.size - 3)
             while (cursor.moveToNext()) {
-                String testName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-
+                val testName = cursor.getString(cursor.getColumnIndexOrThrow("name"))
                 values[0] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("unknown_delay"));
+                        cursor.getColumnIndexOrThrow("unknown_delay"))
                 values[1] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("input"));
+                        cursor.getColumnIndexOrThrow("input"))
                 values[2] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("animation"));
+                        cursor.getColumnIndexOrThrow("animation"))
                 values[3] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("layout"));
+                        cursor.getColumnIndexOrThrow("layout"))
                 values[4] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("draw"));
+                        cursor.getColumnIndexOrThrow("draw"))
                 values[5] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("sync"));
+                        cursor.getColumnIndexOrThrow("sync"))
                 values[6] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("command_issue"));
+                        cursor.getColumnIndexOrThrow("command_issue"))
                 values[7] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("swap_buffers"));
+                        cursor.getColumnIndexOrThrow("swap_buffers"))
                 values[8] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("total_duration"));
+                        cursor.getColumnIndexOrThrow("total_duration"))
                 values[8] = cursor.getDouble(
-                        cursor.getColumnIndexOrThrow("total_duration"));
-
-                UiBenchmarkResult result = testsResults.get(testName);
+                        cursor.getColumnIndexOrThrow("total_duration"))
+                var result = testsResults[testName]
                 if (null == result) {
-                    int refresh_rate = loadRefreshRate(runId, db);
-                    result = new UiBenchmarkResult(values, refresh_rate);
-                    testsResults.put(testName, result);
+                    val refresh_rate = loadRefreshRate(runId, db)
+                    result = UiBenchmarkResult(values, refresh_rate)
+                    testsResults[testName] = result
                 } else {
-                    result.update(values);
+                    result.update(values)
                 }
             }
-
-            cursor.close();
+            cursor.close()
         } finally {
-            db.close();
+            db.close()
         }
-
-        return testsResults;
+        return testsResults
     }
 
-    public void exportToCsv() throws IOException {
-        String path = mContext.getFilesDir() + "/results-" + System.currentTimeMillis() + ".csv";
-        SQLiteDatabase db = getReadableDatabase();
+    @Throws(IOException::class)
+    fun exportToCsv() {
+        val path = mContext.filesDir.toString() + "/results-" + System.currentTimeMillis() + ".csv"
+        val db = readableDatabase
 
         // stats across metrics for each run and each test
-        HashMap<String, DescriptiveStatistics> stats = new HashMap<>();
-
-        Cursor runIdCursor = db.query(
-                UI_RESULTS_TABLE, new String[] { "run_id" }, null, null, "run_id", null, null);
-
+        val stats = HashMap<String, DescriptiveStatistics>()
+        val runIdCursor = db.query(
+                GlobalResultsStore.Companion.UI_RESULTS_TABLE, arrayOf<String>("run_id"), null, null, "run_id", null, null)
         while (runIdCursor.moveToNext()) {
-
-            int runId = runIdCursor.getInt(runIdCursor.getColumnIndexOrThrow("run_id"));
-            HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults =
-                    loadDetailedResults(runId);
-
-            writeRawResults(runId, detailedResults);
-
-            DescriptiveStatistics overall = new DescriptiveStatistics();
-            try (FileWriter writer = new FileWriter(path, true)) {
-                writer.write("Run ID, " + runId + "\n");
-                writer.write("Test, Iteration, Score, Jank Penalty, Consistency Bonus, 95th, " +
-                        "90th\n");
-                for (String testName : detailedResults.keySet()) {
-                    ArrayList<UiBenchmarkResult> results = detailedResults.get(testName);
-                    DescriptiveStatistics scoreStats = new DescriptiveStatistics();
-                    DescriptiveStatistics jankPenalty = new DescriptiveStatistics();
-                    DescriptiveStatistics consistencyBonus = new DescriptiveStatistics();
-                    for (int i = 0; i < results.size(); i++) {
-                        UiBenchmarkResult result = results.get(i);
-                        int score = result.getScore();
-                        scoreStats.addValue(score);
-                        overall.addValue(score);
-                        jankPenalty.addValue(result.getJankPenalty());
-                        consistencyBonus.addValue(result.getConsistencyBonus());
-
-                        writer.write(testName);
-                        writer.write(",");
-                        writer.write(String.valueOf(i));
-                        writer.write(",");
-                        writer.write(String.valueOf(score));
-                        writer.write(",");
-                        writer.write(String.valueOf(result.getJankPenalty()));
-                        writer.write(",");
-                        writer.write(String.valueOf(result.getConsistencyBonus()));
-                        writer.write(",");
-                        writer.write(Double.toString(
-                                result.getPercentile(FrameMetrics.TOTAL_DURATION, 95)));
-                        writer.write(",");
-                        writer.write(Double.toString(
-                                result.getPercentile(FrameMetrics.TOTAL_DURATION, 90)));
-                        writer.write("\n");
+            val runId = runIdCursor.getInt(runIdCursor.getColumnIndexOrThrow("run_id"))
+            val detailedResults = loadDetailedResults(runId)
+            writeRawResults(runId, detailedResults)
+            val overall = DescriptiveStatistics()
+            FileWriter(path, true).use { writer ->
+                writer.write("Run ID, $runId\n")
+                writer.write("""
+    Test, Iteration, Score, Jank Penalty, Consistency Bonus, 95th, 90th
+    
+    """.trimIndent())
+                for (testName in detailedResults.keys) {
+                    val results = detailedResults[testName]!!
+                    val scoreStats = DescriptiveStatistics()
+                    val jankPenalty = DescriptiveStatistics()
+                    val consistencyBonus = DescriptiveStatistics()
+                    for (i in results.indices) {
+                        val result = results[i]
+                        val score = result.score
+                        scoreStats.addValue(score.toDouble())
+                        overall.addValue(score.toDouble())
+                        jankPenalty.addValue(result.jankPenalty.toDouble())
+                        consistencyBonus.addValue(result.consistencyBonus.toDouble())
+                        writer.write(testName)
+                        writer.write(",")
+                        writer.write(i.toString())
+                        writer.write(",")
+                        writer.write(score.toString())
+                        writer.write(",")
+                        writer.write(result.jankPenalty.toString())
+                        writer.write(",")
+                        writer.write(result.consistencyBonus.toString())
+                        writer.write(",")
+                        writer.write(java.lang.Double.toString(
+                                result.getPercentile(FrameMetrics.TOTAL_DURATION, 95)))
+                        writer.write(",")
+                        writer.write(java.lang.Double.toString(
+                                result.getPercentile(FrameMetrics.TOTAL_DURATION, 90)))
+                        writer.write("\n")
                     }
-
                     writer.write("Score CV," +
-                            (100 * scoreStats.getStandardDeviation()
-                                    / scoreStats.getMean()) + "%\n");
+                            (100 * scoreStats.standardDeviation
+                                    / scoreStats.mean) + "%\n")
                     writer.write("Jank Penalty CV, " +
-                            (100 * jankPenalty.getStandardDeviation()
-                                    / jankPenalty.getMean()) + "%\n");
+                            (100 * jankPenalty.standardDeviation
+                                    / jankPenalty.mean) + "%\n")
                     writer.write("Consistency Bonus CV, " +
-                            (100 * consistencyBonus.getStandardDeviation()
-                                    / consistencyBonus.getMean()) + "%\n");
-                    writer.write("\n");
+                            (100 * consistencyBonus.standardDeviation
+                                    / consistencyBonus.mean) + "%\n")
+                    writer.write("\n")
                 }
-
-                writer.write("Overall Score CV,"  +
-                        (100 * overall.getStandardDeviation() / overall.getMean()) + "%\n");
-                writer.flush();
+                writer.write("Overall Score CV," + 100 * overall.standardDeviation / overall.mean + "%\n")
+                writer.flush()
             }
         }
-
-        runIdCursor.close();
+        runIdCursor.close()
     }
 
-    private void writeRawResults(int runId,
-                                 @NonNull HashMap<String, ArrayList<UiBenchmarkResult>> detailedResults) {
-        final String path = mContext.getFilesDir() +
+    private fun writeRawResults(runId: Int,
+                                detailedResults: HashMap<String, ArrayList<UiBenchmarkResult>>) {
+        val path = mContext.filesDir.toString() +
                 "/" +
                 runId +
-                ".csv";
-        try (FileWriter writer = new FileWriter(path)) {
-            for (String test : detailedResults.keySet()) {
-                writer.write("Test, " + test + "\n");
-                writer.write("iteration, unknown delay, input, animation, layout, draw, sync, " +
-                        "command issue, swap buffers\n");
-                ArrayList<UiBenchmarkResult> runs = detailedResults.get(test);
-                for (int i = 0; i < runs.size(); i++) {
-                    UiBenchmarkResult run = runs.get(i);
-                    for (int j = 0; j < run.getTotalFrameCount(); j++) {
-                        writer.write(i + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.UNKNOWN_DELAY_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.INPUT_HANDLING_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.ANIMATION_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.LAYOUT_MEASURE_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.DRAW_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.SYNC_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.COMMAND_ISSUE_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.SWAP_BUFFERS_DURATION) + "," +
-                                run.getMetricAtIndex(j, FrameMetrics.TOTAL_DURATION) + "\n");
+                ".csv"
+        try {
+            FileWriter(path).use { writer ->
+                for (test in detailedResults.keys) {
+                    writer.write("Test, $test\n")
+                    writer.write("""
+    iteration, unknown delay, input, animation, layout, draw, sync, command issue, swap buffers
+    
+    """.trimIndent())
+                    val runs = detailedResults[test]!!
+                    for (i in runs.indices) {
+                        val run = runs[i]
+                        for (j in 0 until run.totalFrameCount) {
+                            writer.write("""
+    $i,${run.getMetricAtIndex(j, FrameMetrics.UNKNOWN_DELAY_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.INPUT_HANDLING_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.ANIMATION_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.LAYOUT_MEASURE_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.DRAW_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.SYNC_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.COMMAND_ISSUE_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.SWAP_BUFFERS_DURATION)},${run.getMetricAtIndex(j, FrameMetrics.TOTAL_DURATION)}
+    
+    """.trimIndent())
+                        }
                     }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 
-    @Override
-    public void onUpgrade(@NonNull SQLiteDatabase sqLiteDatabase, int oldVersion, int currentVersion) {
-        if (GlobalResultsStore.VERSION > oldVersion) {
+    override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, currentVersion: Int) {
+        if (GlobalResultsStore.Companion.VERSION > oldVersion) {
             sqLiteDatabase.execSQL("ALTER TABLE "
-                    + UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;");
+                    + GlobalResultsStore.Companion.UI_RESULTS_TABLE + " ADD COLUMN timestamp TEXT;")
+        }
+    }
+
+    companion object {
+        private const val VERSION = 2
+        private val sInstance: GlobalResultsStore? = null
+        private const val UI_RESULTS_TABLE = "ui_results"
+        private const val REFRESH_RATE_TABLE = "refresh_rates"
+        fun getInstance(context: Context): GlobalResultsStore {
+            if (null == GlobalResultsStore.Companion.sInstance) {
+                GlobalResultsStore.Companion.sInstance = GlobalResultsStore(context.applicationContext)
+            }
+            return GlobalResultsStore.Companion.sInstance
         }
     }
 }

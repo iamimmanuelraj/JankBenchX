@@ -13,186 +13,148 @@
  * License.
  *
  */
+package com.android.benchmark.ui.automation
 
-package com.android.benchmark.ui.automation;
+import android.os.SystemClockimport
 
-import android.os.SystemClock;
-import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import android.view.MotionEvent;
-
-import java.util.ArrayList;
-import java.util.List;
-
+android.view.MotionEventimport androidx.annotation .IntDef
 /**
  * Encodes a UI interaction as a series of MotionEvents
  */
-public class Interaction {
-    private static final int STEP_COUNT = 20;
-    // TODO: scale to device display density
-    private static final int DEFAULT_FLING_SIZE_PX = 500;
-    private static final int DEFAULT_FLING_DURATION_MS = 20;
-    private static final int DEFAULT_TAP_DURATION_MS = 20;
-    private List<MotionEvent> mEvents;
+class Interaction {
+    private var mEvents: List<MotionEvent>? = null
 
     // Interaction parameters
-    @Nullable
-    private final float[] mXPositions;
-    @Nullable
-    private final float[] mYPositions;
-    private final long mDuration;
-    @Nullable
-    private final int[] mKeyCodes;
+    private val mXPositions: FloatArray?
+    private val mYPositions: FloatArray?
+    private val mDuration: Long
+    val keyCodes: IntArray?
+
     @Type
-    private final int mType;
+    val type: Int
 
-    @IntDef({
-            Interaction.Type.TAP,
-            Interaction.Type.FLING,
-            Interaction.Type.PINCH,
-            Interaction.Type.KEY_EVENT})
-    public @interface Type {
-        int TAP = 0;
-        int FLING = 1;
-        int PINCH = 2;
-        int KEY_EVENT = 3;
-    }
-
-    @NonNull
-    public static Interaction newFling(float startX, float startY,
-                                       float endX, float endY, long duration) {
-       return new Interaction(Interaction.Type.FLING, new float[]{startX, endX},
-               new float[]{startY, endY}, duration);
-    }
-
-    @NonNull
-    public static Interaction newFlingDown(float startX, float startY) {
-        return new Interaction(Interaction.Type.FLING,
-                new float[]{startX, startX},
-                new float[]{startY, startY + DEFAULT_FLING_SIZE_PX}, DEFAULT_FLING_DURATION_MS);
-    }
-
-    @NonNull
-    public static Interaction newFlingUp(float startX, float startY) {
-        return new Interaction(Interaction.Type.FLING,
-                new float[]{startX, startX}, new float[]{startY, startY - DEFAULT_FLING_SIZE_PX},
-                DEFAULT_FLING_DURATION_MS);
-    }
-
-    @NonNull
-    public static Interaction newTap(float startX, float startY) {
-        return new Interaction(Interaction.Type.TAP,
-                new float[]{startX, startX}, new float[]{startY, startY},
-                DEFAULT_FLING_DURATION_MS);
-    }
-
-    @NonNull
-    public static Interaction newKeyInput(int[] keyCodes) {
-        return new Interaction(keyCodes);
-    }
-
-    public List<MotionEvent> getEvents() {
-        if (Type.FLING == this.mType) {
-            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-        } else if (Type.TAP == this.mType) {
-            mEvents = createInterpolatedEventList(mXPositions, mYPositions, mDuration);
-        } else if (Type.PINCH == this.mType) {
+    @IntDef([Type.TAP, Type.FLING, Type.PINCH, Type.KEY_EVENT])
+    annotation class Type {
+        companion object {
+            var TAP = 0
+            var FLING = 1
+            var PINCH = 2
+            var KEY_EVENT = 3
         }
-
-        return mEvents;
     }
 
-    public int getType() {
-        return mType;
-    }
-
-    public int[] getKeyCodes() {
-        return mKeyCodes;
-    }
-
-    @NonNull
-    private static List<MotionEvent> createInterpolatedEventList(
-            @NonNull float[] xPos, @NonNull float[] yPos, long duration) {
-        long startTime = SystemClock.uptimeMillis() + 100;
-        List<MotionEvent> result = new ArrayList<>();
-
-        float startX = xPos[0];
-        float startY = yPos[0];
-
-        MotionEvent downEvent = MotionEvent.obtain(
-                startTime, startTime, MotionEvent.ACTION_DOWN, startX, startY, 0);
-        result.add(downEvent);
-
-        for (int i = 1; i < xPos.length; i++) {
-            float endX = xPos[i];
-            float endY = yPos[i];
-            float stepX = (endX - startX) / STEP_COUNT;
-            float stepY = (endY - startY) / STEP_COUNT;
-            float stepT = duration / STEP_COUNT;
-
-            for (int j = 0; Interaction.STEP_COUNT > j; j++) {
-                long deltaT = Math.round(j * stepT);
-                long deltaX = Math.round(j * stepX);
-                long deltaY = Math.round(j * stepY);
-                MotionEvent moveEvent = MotionEvent.obtain(startTime, startTime + deltaT,
-                        MotionEvent.ACTION_MOVE, startX + deltaX, startY + deltaY, 0);
-                result.add(moveEvent);
+    val events: List<MotionEvent>?
+        get() {
+            if (Type.FLING == type) {
+                mEvents = createInterpolatedEventList(mXPositions!!, mYPositions!!, mDuration)
+            } else if (Type.TAP == type) {
+                mEvents = createInterpolatedEventList(mXPositions!!, mYPositions!!, mDuration)
+            } else if (Type.PINCH == type) {
             }
-
-            startX = endX;
-            startY = endY;
+            return mEvents
         }
 
-        float lastX = xPos[xPos.length - 1];
-        float lastY = yPos[yPos.length - 1];
-        MotionEvent lastEvent = MotionEvent.obtain(startTime, startTime + duration,
-                MotionEvent.ACTION_UP, lastX, lastY, 0);
-        result.add(lastEvent);
-
-        return result;
+    private constructor(@Type type: Int,
+                        xPos: FloatArray, yPos: FloatArray, duration: Long) {
+        this.type = type
+        mXPositions = xPos
+        mYPositions = yPos
+        mDuration = duration
+        keyCodes = null
     }
 
-    private Interaction(@Interaction.Type int type,
-                        float[] xPos, float[] yPos, long duration) {
-        mType = type;
-        mXPositions = xPos;
-        mYPositions = yPos;
-        mDuration = duration;
-        mKeyCodes = null;
+    private constructor(codes: IntArray) {
+        keyCodes = codes
+        type = Type.KEY_EVENT
+        mYPositions = null
+        mXPositions = null
+        mDuration = 0
     }
 
-    private Interaction(int[] codes) {
-        mKeyCodes = codes;
-        mType = Type.KEY_EVENT;
-        mYPositions = null;
-        mXPositions = null;
-        mDuration = 0;
+    private constructor(@Type type: Int,
+                        xPositions: List<Float>, yPositions: List<Float>, duration: Long) {
+        require(xPositions.size == yPositions.size) { "must have equal number of x and y positions" }
+        var current = 0
+        mXPositions = FloatArray(xPositions.size)
+        for (p in xPositions) {
+            mXPositions[current] = p
+            current++
+        }
+        current = 0
+        mYPositions = FloatArray(yPositions.size)
+        for (p in xPositions) {
+            mXPositions[current] = p
+            current++
+        }
+        this.type = type
+        mDuration = duration
+        keyCodes = null
     }
 
-    private Interaction(@Interaction.Type int type,
-                        @NonNull List<Float> xPositions, @NonNull List<Float> yPositions, long duration) {
-        if (xPositions.size() != yPositions.size()) {
-            throw new IllegalArgumentException("must have equal number of x and y positions");
+    companion object {
+        private const val STEP_COUNT = 20
+
+        // TODO: scale to device display density
+        private const val DEFAULT_FLING_SIZE_PX = 500
+        private const val DEFAULT_FLING_DURATION_MS = 20
+        private const val DEFAULT_TAP_DURATION_MS = 20
+        fun newFling(startX: Float, startY: Float,
+                     endX: Float, endY: Float, duration: Long): Interaction {
+            return Interaction(Type.FLING, floatArrayOf(startX, endX), floatArrayOf(startY, endY), duration)
         }
 
-        int current = 0;
-        mXPositions = new float[xPositions.size()];
-        for (float p : xPositions) {
-            mXPositions[current] = p;
-            current++;
+        fun newFlingDown(startX: Float, startY: Float): Interaction {
+            return Interaction(Type.FLING, floatArrayOf(startX, startX), floatArrayOf(startY, startY + DEFAULT_FLING_SIZE_PX), DEFAULT_FLING_DURATION_MS.toLong())
         }
 
-        current = 0;
-        mYPositions = new float[yPositions.size()];
-        for (float p : xPositions) {
-            mXPositions[current] = p;
-            current++;
+        fun newFlingUp(startX: Float, startY: Float): Interaction {
+            return Interaction(Type.FLING, floatArrayOf(startX, startX), floatArrayOf(startY, startY - DEFAULT_FLING_SIZE_PX),
+                    DEFAULT_FLING_DURATION_MS.toLong())
         }
 
-        mType = type;
-        mDuration = duration;
-        mKeyCodes = null;
+        fun newTap(startX: Float, startY: Float): Interaction {
+            return Interaction(Type.TAP, floatArrayOf(startX, startX), floatArrayOf(startY, startY),
+                    DEFAULT_FLING_DURATION_MS.toLong())
+        }
+
+        fun newKeyInput(keyCodes: IntArray): Interaction {
+            return Interaction(keyCodes)
+        }
+
+        private fun createInterpolatedEventList(
+                xPos: FloatArray, yPos: FloatArray, duration: Long): List<MotionEvent> {
+            val startTime = SystemClock.uptimeMillis() + 100
+            val result: MutableList<MotionEvent> = ArrayList()
+            var startX = xPos[0]
+            var startY = yPos[0]
+            val downEvent = MotionEvent.obtain(
+                    startTime, startTime, MotionEvent.ACTION_DOWN, startX, startY, 0)
+            result.add(downEvent)
+            for (i in 1 until xPos.size) {
+                val endX = xPos[i]
+                val endY = yPos[i]
+                val stepX = (endX - startX) / STEP_COUNT
+                val stepY = (endY - startY) / STEP_COUNT
+                val stepT = (duration / STEP_COUNT).toFloat()
+                var j = 0
+                while (STEP_COUNT > j) {
+                    val deltaT = Math.round(j * stepT).toLong()
+                    val deltaX = Math.round(j * stepX).toLong()
+                    val deltaY = Math.round(j * stepY).toLong()
+                    val moveEvent = MotionEvent.obtain(startTime, startTime + deltaT,
+                            MotionEvent.ACTION_MOVE, startX + deltaX, startY + deltaY, 0)
+                    result.add(moveEvent)
+                    j++
+                }
+                startX = endX
+                startY = endY
+            }
+            val lastX = xPos[xPos.size - 1]
+            val lastY = yPos[yPos.size - 1]
+            val lastEvent = MotionEvent.obtain(startTime, startTime + duration,
+                    MotionEvent.ACTION_UP, lastX, lastY, 0)
+            result.add(lastEvent)
+            return result
+        }
     }
 }

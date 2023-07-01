@@ -13,116 +13,193 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.syntheticimport
 
-package com.android.benchmark.synthetic;
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.WindowManager
+import android.widget.TextView
+import com.android.benchmark.R
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.TextView;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
-import androidx.annotation.NonNull;
+class MemoryActivity : Activity() {
+    private var mTextStatus: TextView? = null
+    private var mTextMin: TextView? = null
+    private var mTextMax: TextView? = null
+    private var mTextTypical: TextView? = null
+    private var mTimeline: PerfTimeline? = null
+    var mTI: TestInterface? = null
+    var mActiveTest = 0
 
-import com.android.benchmark.R;
-import com.android.benchmark.app.PerfTimeline;
-
-
-public class MemoryActivity extends Activity {
-    private TextView mTextStatus;
-    private TextView mTextMin;
-    private TextView mTextMax;
-    private TextView mTextTypical;
-    private PerfTimeline mTimeline;
-
-    TestInterface mTI;
-    int mActiveTest;
-
-    private class SyntheticTestCallback extends TestInterface.TestResultCallback {
-        @Override
-        void onTestResult(int command, float result) {
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("com.android.benchmark.synthetic.TEST_RESULT", result);
-            setResult(Activity.RESULT_OK, resultIntent);
-            finish();
+    private inner class SyntheticTestCallback : TestResultCallback() {
+        override fun onTestResult(command: Int, result: Float) {
+            val resultIntent = Intent()
+            resultIntent.putExtra("com.android.benchmark.synthetic.TEST_RESULT", result)
+            setResult(RESULT_OK, resultIntent)
+            finish()
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_memory);
-
-        mTextStatus = findViewById(R.id.textView_status);
-        mTextMin = findViewById(R.id.textView_min);
-        mTextMax = findViewById(R.id.textView_max);
-        mTextTypical = findViewById(R.id.textView_typical);
-
-        mTimeline = findViewById(R.id.mem_timeline);
-
-        mTI = new TestInterface(mTimeline, 2, new SyntheticTestCallback());
-        mTI.mTextMax = mTextMax;
-        mTI.mTextMin = mTextMin;
-        mTI.mTextStatus = mTextStatus;
-        mTI.mTextTypical = mTextTypical;
-
-        mTimeline.mLinesLow = mTI.mLinesLow;
-        mTimeline.mLinesHigh = mTI.mLinesHigh;
-        mTimeline.mLinesValue = mTI.mLinesValue;
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_memory)
+        mTextStatus = findViewById(R.id.textView_status)
+        mTextMin = findViewById(R.id.textView_min)
+        mTextMax = findViewById(R.id.textView_max)
+        mTextTypical = findViewById(R.id.textView_typical)
+        mTimeline = findViewById(R.id.mem_timeline)
+        mTI = TestInterface(mTimeline, 2, SyntheticTestCallback())
+        mTI!!.mTextMax = mTextMax
+        mTI!!.mTextMin = mTextMin
+        mTI!!.mTextStatus = mTextStatus
+        mTI!!.mTextTypical = mTextTypical
+        mTimeline.mLinesLow = mTI!!.mLinesLow
+        mTimeline.mLinesHigh = mTI!!.mLinesHigh
+        mTimeline.mLinesValue = mTI!!.mLinesValue
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent i = getIntent();
-        mActiveTest = i.getIntExtra("test", 0);
-
-        if (0 == this.mActiveTest) {
-            mTI.runMemoryBandwidth();
-        } else if (1 == this.mActiveTest) {
-            mTI.runMemoryLatency();
-        } else if (2 == this.mActiveTest) {
-            mTI.runPowerManagement();
-        } else if (3 == this.mActiveTest) {
-            mTI.runCPUHeatSoak();
-        } else if (4 == this.mActiveTest) {
-            mTI.runCPUGFlops();
+    override fun onResume() {
+        super.onResume()
+        val i = intent
+        mActiveTest = i.getIntExtra("test", 0)
+        if (0 == mActiveTest) {
+            mTI!!.runMemoryBandwidth()
+        } else if (1 == mActiveTest) {
+            mTI!!.runMemoryLatency()
+        } else if (2 == mActiveTest) {
+            mTI!!.runPowerManagement()
+        } else if (3 == mActiveTest) {
+            mTI!!.runCPUHeatSoak()
+        } else if (4 == mActiveTest) {
+            mTI!!.runCPUGFlops()
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_memory, menu);
-        return true;
+        menuInflater.inflate(R.menu.menu_memory, menu)
+        return true
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        val id = item.itemId
+        return if (id == R.id.action_settings) {
+            true
+        } else super.onOptionsItemSelected(item)
     }
 
-    public void onCpuBandwidth(View v) {
-
-
-    }
-
-
-
-
+    fun onCpuBandwidth(v: View?) {}
 }

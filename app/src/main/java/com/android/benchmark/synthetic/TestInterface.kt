@@ -13,435 +13,488 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.syntheticimport
 
-package com.android.benchmark.synthetic;
+import android.view.View
+import android.widget.TextView
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import java.util.LinkedList
+import java.util.Queue
 
-import android.view.View;
-import android.widget.TextView;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
-import androidx.annotation.NonNull;
-
-import org.apache.commons.math3.stat.StatUtils;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
-import java.util.LinkedList;
-import java.util.Queue;
-
-
-public class TestInterface {
-    native long nInit(long options);
-    native long nDestroy(long b);
-    native float nGetData(long b, float[] data);
-    native boolean nRunPowerManagementTest(long b, long options);
-    native boolean nRunCPUHeatSoakTest(long b, long options);
-
-    native boolean nMemTestStart(long b);
-    native float nMemTestBandwidth(long b, long size);
-    native float nMemTestLatency(long b, long size);
-    native void nMemTestEnd(long b);
-
-    native float nGFlopsTest(long b, long opt);
-
-    public static class TestResultCallback {
-        void onTestResult(int command, float result) { }
+class TestInterface internal constructor(v: View, runtimeSeconds: Int, callback: TestResultCallback) {
+    external fun nInit(options: Long): Long
+    external fun nDestroy(b: Long): Long
+    external fun nGetData(b: Long, data: FloatArray?): Float
+    external fun nRunPowerManagementTest(b: Long, options: Long): Boolean
+    external fun nRunCPUHeatSoakTest(b: Long, options: Long): Boolean
+    external fun nMemTestStart(b: Long): Boolean
+    external fun nMemTestBandwidth(b: Long, size: Long): Float
+    external fun nMemTestLatency(b: Long, size: Long): Float
+    external fun nMemTestEnd(b: Long)
+    external fun nGFlopsTest(b: Long, opt: Long): Float
+    open class TestResultCallback {
+        open fun onTestResult(command: Int, result: Float) {}
     }
 
-    static {
-        System.loadLibrary("nativebench");
+    var mLinesLow: FloatArray
+    var mLinesHigh: FloatArray
+    var mLinesValue: FloatArray
+    var mTextStatus: TextView? = null
+    var mTextMin: TextView? = null
+    var mTextMax: TextView? = null
+    var mTextTypical: TextView? = null
+    private val mViewToUpdate: View
+    private val mLT: LooperThread
+
+    init {
+        val buckets = runtimeSeconds * 1000
+        mLinesLow = FloatArray(buckets * 4)
+        mLinesHigh = FloatArray(buckets * 4)
+        mLinesValue = FloatArray(buckets * 4)
+        mViewToUpdate = v
+        mLT = LooperThread(this, callback)
+        mLT.start()
     }
 
-    float[] mLinesLow;
-    float[] mLinesHigh;
-    float[] mLinesValue;
-    TextView mTextStatus;
-    TextView mTextMin;
-    TextView mTextMax;
-    TextView mTextTypical;
-
-    private final View mViewToUpdate;
-
-    @NonNull
-    private final LooperThread mLT;
-
-    TestInterface(View v, int runtimeSeconds, TestResultCallback callback) {
-        int buckets = runtimeSeconds * 1000;
-        mLinesLow = new float[buckets * 4];
-        mLinesHigh = new float[buckets * 4];
-        mLinesValue = new float[buckets * 4];
-        mViewToUpdate = v;
-
-        mLT = new LooperThread(this, callback);
-        mLT.start();
-    }
-
-    static class LooperThread extends Thread {
-        public static final int CommandExit = 1;
-        public static final int TestPowerManagement = 2;
-        public static final int TestMemoryBandwidth = 3;
-        public static final int TestMemoryLatency = 4;
-        public static final int TestHeatSoak = 5;
-        public static final int TestGFlops = 6;
-
-        private volatile boolean mRun = true;
-        private final TestInterface mTI;
-        private final TestResultCallback mCallback;
-
-        @NonNull
-        Queue<Integer> mCommandQueue = new LinkedList<Integer>();
-
-        LooperThread(TestInterface ti, TestResultCallback callback) {
-            super("BenchmarkTestThread");
-            mTI = ti;
-            mCallback = callback;
-        }
-
-        void runCommand(int command) {
-            Integer i = Integer.valueOf(command);
-
-            synchronized (this) {
-                mCommandQueue.add(i);
-                notifyAll();
+    internal class LooperThread(private val mTI: TestInterface, private val mCallback: TestResultCallback) : Thread("BenchmarkTestThread") {
+        @Volatile
+        private var mRun = true
+        var mCommandQueue: Queue<Int> = LinkedList()
+        fun runCommand(command: Int) {
+            val i = Integer.valueOf(command)
+            synchronized(this) {
+                mCommandQueue.add(i)
+                notifyAll()
             }
         }
 
-        public void run() {
-            long b = mTI.nInit(0);
-            if (0 == b) {
-                return;
+        override fun run() {
+            val b = mTI.nInit(0)
+            if (0L == b) {
+                return
             }
-
             while (mRun) {
-                int command = 0;
-                synchronized (this) {
+                var command = 0
+                synchronized(this) {
                     if (mCommandQueue.isEmpty()) {
                         try {
-                            wait();
-                        } catch (InterruptedException e) {
+                            wait()
+                        } catch (e: InterruptedException) {
                         }
                     }
-
                     if (!mCommandQueue.isEmpty()) {
-                        command = mCommandQueue.remove();
+                        command = mCommandQueue.remove()
                     }
                 }
-
-                if (LooperThread.CommandExit == command) {
-                    mRun = false;
-                } else if (LooperThread.TestPowerManagement == command) {
-                    float score = mTI.testPowerManagement(b);
-                    mCallback.onTestResult(LooperThread.TestPowerManagement, 0);
-                } else if (LooperThread.TestMemoryBandwidth == command) {
-                    mTI.testCPUMemoryBandwidth(b);
-                } else if (LooperThread.TestMemoryLatency == command) {
-                    mTI.testCPUMemoryLatency(b);
-                } else if (LooperThread.TestHeatSoak == command) {
-                    mTI.testCPUHeatSoak(b);
-                } else if (LooperThread.TestGFlops == command) {
-                    mTI.testCPUGFlops(b);
+                if (CommandExit == command) {
+                    mRun = false
+                } else if (TestPowerManagement == command) {
+                    val score = mTI.testPowerManagement(b)
+                    mCallback.onTestResult(TestPowerManagement, 0f)
+                } else if (TestMemoryBandwidth == command) {
+                    mTI.testCPUMemoryBandwidth(b)
+                } else if (TestMemoryLatency == command) {
+                    mTI.testCPUMemoryLatency(b)
+                } else if (TestHeatSoak == command) {
+                    mTI.testCPUHeatSoak(b)
+                } else if (TestGFlops == command) {
+                    mTI.testCPUGFlops(b)
                 }
 
                 //mViewToUpdate.post(new Runnable() {
-                  //  public void run() {
-                   //     mViewToUpdate.invalidate();
-                    //}
+                //  public void run() {
+                //     mViewToUpdate.invalidate();
+                //}
                 //});
             }
-
-            mTI.nDestroy(b);
+            mTI.nDestroy(b)
         }
 
-        void exit() {
-            mRun = false;
+        fun exit() {
+            mRun = false
+        }
+
+        companion object {
+            const val CommandExit = 1
+            const val TestPowerManagement = 2
+            const val TestMemoryBandwidth = 3
+            const val TestMemoryLatency = 4
+            const val TestHeatSoak = 5
+            const val TestGFlops = 6
         }
     }
 
-    void postTextToView(@NonNull TextView v, String s) {
-        final TextView tv = v;
-        final String ts = s;
+    fun postTextToView(v: TextView, s: String) {
+        v.post { v.text = s }
+    }
 
-        v.post(new Runnable() {
-            public void run() {
-                tv.setText(ts);
+    fun calcAverage(data: FloatArray): Float {
+        var total = 0.0f
+        for (ct in data.indices) {
+            total += data[ct]
+        }
+        return total / data.size
+    }
+
+    fun makeGraph(data: FloatArray, lines: FloatArray) {
+        for (ct in data.indices) {
+            lines[ct * 4] = ct.toFloat()
+            lines[ct * 4 + 1] = 500.0f - data[ct]
+            lines[ct * 4 + 2] = ct.toFloat()
+            lines[ct * 4 + 3] = 500.0f
+        }
+    }
+
+    fun testPowerManagement(b: Long): Float {
+        val dat = FloatArray(mLinesLow.size / 4)
+        postTextToView(mTextStatus!!, "Running single-threaded")
+        nRunPowerManagementTest(b, 1)
+        nGetData(b, dat)
+        makeGraph(dat, mLinesLow)
+        mViewToUpdate.postInvalidate()
+        val avgMin = calcAverage(dat)
+        postTextToView(mTextMin!!, "Single threaded $avgMin per second")
+        postTextToView(mTextStatus!!, "Running multi-threaded")
+        nRunPowerManagementTest(b, 4)
+        nGetData(b, dat)
+        makeGraph(dat, mLinesHigh)
+        mViewToUpdate.postInvalidate()
+        val avgMax = calcAverage(dat)
+        postTextToView(mTextMax!!, "Multi threaded $avgMax per second")
+        postTextToView(mTextStatus!!, "Running typical")
+        nRunPowerManagementTest(b, 0)
+        nGetData(b, dat)
+        makeGraph(dat, mLinesValue)
+        mViewToUpdate.postInvalidate()
+        val avgTypical = calcAverage(dat)
+        val ofIdeal = avgTypical / (avgMax + avgMin) * 200.0f
+        postTextToView(mTextTypical!!, String.format("Typical mix (50/50) %%%2.0f of ideal", ofIdeal))
+        return ofIdeal * (avgMax + avgMin)
+    }
+
+    fun testCPUHeatSoak(b: Long): Float {
+        val dat = FloatArray(1000)
+        postTextToView(mTextStatus!!, "Running heat soak test")
+        run {
+            var t = 0
+            while (1000 > t) {
+                mLinesLow[t * 4] = t.toFloat()
+                mLinesLow[t * 4 + 1] = 498.0f
+                mLinesLow[t * 4 + 2] = t.toFloat()
+                mLinesLow[t * 4 + 3] = 500.0f
+                t++
             }
-        });
-
-    }
-
-    float calcAverage(@NonNull float[] data) {
-        float total = 0.0f;
-        for (int ct=0; ct < data.length; ct++) {
-            total += data[ct];
         }
-        return total / data.length;
-    }
-
-    void makeGraph(@NonNull float[] data, float[] lines) {
-        for (int ct = 0; ct < data.length; ct++) {
-            lines[ct * 4] = ct;
-            lines[ct * 4 + 1] = 500.0f - data[ct];
-            lines[ct * 4 + 2] = ct;
-            lines[ct * 4 + 3] = 500.0f;
-        }
-    }
-
-    float testPowerManagement(long b) {
-        float[] dat = new float[mLinesLow.length / 4];
-        postTextToView(mTextStatus, "Running single-threaded");
-        nRunPowerManagementTest(b, 1);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesLow);
-        mViewToUpdate.postInvalidate();
-        float avgMin = calcAverage(dat);
-
-        postTextToView(mTextMin, "Single threaded " + avgMin + " per second");
-
-        postTextToView(mTextStatus, "Running multi-threaded");
-        nRunPowerManagementTest(b, 4);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesHigh);
-        mViewToUpdate.postInvalidate();
-        float avgMax = calcAverage(dat);
-        postTextToView(mTextMax, "Multi threaded " + avgMax + " per second");
-
-        postTextToView(mTextStatus, "Running typical");
-        nRunPowerManagementTest(b, 0);
-        nGetData(b, dat);
-        makeGraph(dat, mLinesValue);
-        mViewToUpdate.postInvalidate();
-        float avgTypical = calcAverage(dat);
-
-        float ofIdeal = avgTypical / (avgMax + avgMin) * 200.0f;
-        postTextToView(mTextTypical, String.format("Typical mix (50/50) %%%2.0f of ideal", ofIdeal));
-        return ofIdeal * (avgMax + avgMin);
-    }
-
-    float testCPUHeatSoak(long b) {
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running heat soak test");
-        for (int t = 0; 1000 > t; t++) {
-            mLinesLow[t * 4] = t;
-            mLinesLow[t * 4 + 1] = 498.0f;
-            mLinesLow[t * 4 + 2] = t;
-            mLinesLow[t * 4 + 3] = 500.0f;
-        }
-
-        float peak = 0.0f;
-        float total = 0.0f;
-        float dThroughput = 0;
-        float prev = 0;
-        SummaryStatistics stats = new SummaryStatistics();
-        for (int t = 0; 1000 > t; t++) {
-            nRunCPUHeatSoakTest(b, 1);
-            nGetData(b, dat);
-
-            float p = calcAverage(dat);
-            if (0 != prev) {
-                dThroughput += (prev - p);
+        var peak = 0.0f
+        var total = 0.0f
+        var dThroughput = 0f
+        var prev = 0f
+        val stats = SummaryStatistics()
+        var t = 0
+        while (1000 > t) {
+            nRunCPUHeatSoakTest(b, 1)
+            nGetData(b, dat)
+            val p = calcAverage(dat)
+            if (0f != prev) {
+                dThroughput += prev - p
             }
-
-            prev = p;
-
-            mLinesLow[t * 4 + 1] = 499.0f - p;
+            prev = p
+            mLinesLow[t * 4 + 1] = 499.0f - p
             if (peak < p) {
-                peak = p;
+                peak = p
             }
-            for (float f : dat) {
-                stats.addValue(f);
+            for (f in dat) {
+                stats.addValue(f.toDouble())
             }
-
-            total += p;
-
-            mViewToUpdate.postInvalidate();
-            postTextToView(mTextMin, "Peak " + peak + " per second");
-            postTextToView(mTextMax, "Current " + p + " per second");
-            postTextToView(mTextTypical, "Average " + (total / (t + 1)) + " per second");
+            total += p
+            mViewToUpdate.postInvalidate()
+            postTextToView(mTextMin!!, "Peak $peak per second")
+            postTextToView(mTextMax!!, "Current $p per second")
+            postTextToView(mTextTypical!!, "Average $total" / (t + 1) + " per second")
+            t++
         }
-
-
-        float decreaseOverTime = dThroughput / 1000;
-
-        System.out.println("dthroughput/dt: " + decreaseOverTime);
-
-        float score = (float) (stats.getMean() / (stats.getStandardDeviation() * decreaseOverTime));
-
-        postTextToView(mTextStatus, "Score: " + score);
-        return score;
+        val decreaseOverTime = dThroughput / 1000
+        println("dthroughput/dt: $decreaseOverTime")
+        val score = (stats.mean / (stats.standardDeviation * decreaseOverTime)).toFloat()
+        postTextToView(mTextStatus!!, "Score: $score")
+        return score
     }
 
-    void testCPUMemoryBandwidth(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
-                    8, 10, 12, 14, 16, 20, 24, 28,
-                    32, 40, 48, 56, 64, 80, 96, 112,
-                    128, 160, 192, 224, 256, 320, 384, 448,
-                    512, 640, 768, 896, 1024, 1280, 1536, 1792,
-                    2048, 2560, 3584, 4096, 5120, 6144, 7168,
-                    8192, 10240, 12288, 14336, 16384
-        };
-        final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
-
-        nMemTestStart(b);
-
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Bandwidth test");
-        for (int t = 0; 1000 > t; t++) {
-            mLinesLow[t * 4] = t;
-            mLinesLow[t * 4 + 1] = 498.0f;
-            mLinesLow[t * 4 + 2] = t;
-            mLinesLow[t * 4 + 3] = 500.0f;
-        }
-
-        for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
-
-            float rtot = 0.0f;
-            for (int j = 0; subSteps > j; j++) {
-                float ret = nMemTestBandwidth(b, sizeK[i] * 1024);
-                rtot += ret;
-                results[i * subSteps + j] = ret;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - (results[i*15+j] * 20.0f);
-                mViewToUpdate.postInvalidate();
-            }
-            rtot /= subSteps;
-
-            if (2 == sizeK[i]) {
-                postTextToView(mTextMin, "2K " + rtot + " GB/s");
-            }
-            if (128 == sizeK[i]) {
-                postTextToView(mTextMax, "128K " + rtot + " GB/s");
-            }
-            if (8192 == sizeK[i]) {
-                postTextToView(mTextTypical, "8M " + rtot + " GB/s");
-            }
-
-        }
-
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
-    }
-
-    void testCPUMemoryLatency(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7,
+    fun testCPUMemoryBandwidth(b: Long) {
+        val sizeK = intArrayOf(1, 2, 3, 4, 5, 6, 7,
                 8, 10, 12, 14, 16, 20, 24, 28,
                 32, 40, 48, 56, 64, 80, 96, 112,
                 128, 160, 192, 224, 256, 320, 384, 448,
                 512, 640, 768, 896, 1024, 1280, 1536, 1792,
                 2048, 2560, 3584, 4096, 5120, 6144, 7168,
                 8192, 10240, 12288, 14336, 16384
-        };
-        final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
-
-        nMemTestStart(b);
-
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Latency test");
-        for (int t = 0; 1000 > t; t++) {
-            mLinesLow[t * 4] = t;
-            mLinesLow[t * 4 + 1] = 498.0f;
-            mLinesLow[t * 4 + 2] = t;
-            mLinesLow[t * 4 + 3] = 500.0f;
+        )
+        val subSteps = 15
+        val results = FloatArray(sizeK.size * subSteps)
+        nMemTestStart(b)
+        val dat = FloatArray(1000)
+        postTextToView(mTextStatus!!, "Running Memory Bandwidth test")
+        var t = 0
+        while (1000 > t) {
+            mLinesLow[t * 4] = t.toFloat()
+            mLinesLow[t * 4 + 1] = 498.0f
+            mLinesLow[t * 4 + 2] = t.toFloat()
+            mLinesLow[t * 4 + 3] = 500.0f
+            t++
         }
+        for (i in sizeK.indices) {
+            postTextToView(mTextStatus!!, "Running " + sizeK[i] + " K")
+            var rtot = 0.0f
+            var j = 0
+            while (subSteps > j) {
+                val ret = nMemTestBandwidth(b, (sizeK[i] * 1024).toLong())
+                rtot += ret
+                results[i * subSteps + j] = ret
+                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - results[i * 15 + j] * 20.0f
+                mViewToUpdate.postInvalidate()
+                j++
+            }
+            rtot /= subSteps.toFloat()
+            if (2 == sizeK[i]) {
+                postTextToView(mTextMin!!, "2K $rtot GB/s")
+            }
+            if (128 == sizeK[i]) {
+                postTextToView(mTextMax!!, "128K $rtot GB/s")
+            }
+            if (8192 == sizeK[i]) {
+                postTextToView(mTextTypical!!, "8M $rtot GB/s")
+            }
+        }
+        nMemTestEnd(b)
+        postTextToView(mTextStatus!!, "Done")
+    }
 
-        for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
-
-            float rtot = 0.0f;
-            for (int j = 0; subSteps > j; j++) {
-                float ret = nMemTestLatency(b, sizeK[i] * 1024);
-                rtot += ret;
-                results[i * subSteps + j] = ret;
-
-                if (400.0f < ret) ret = 400.0f;
-                if (0.0f > ret) ret = 0.0f;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret;
+    fun testCPUMemoryLatency(b: Long) {
+        val sizeK = intArrayOf(1, 2, 3, 4, 5, 6, 7,
+                8, 10, 12, 14, 16, 20, 24, 28,
+                32, 40, 48, 56, 64, 80, 96, 112,
+                128, 160, 192, 224, 256, 320, 384, 448,
+                512, 640, 768, 896, 1024, 1280, 1536, 1792,
+                2048, 2560, 3584, 4096, 5120, 6144, 7168,
+                8192, 10240, 12288, 14336, 16384
+        )
+        val subSteps = 15
+        val results = FloatArray(sizeK.size * subSteps)
+        nMemTestStart(b)
+        val dat = FloatArray(1000)
+        postTextToView(mTextStatus!!, "Running Memory Latency test")
+        var t = 0
+        while (1000 > t) {
+            mLinesLow[t * 4] = t.toFloat()
+            mLinesLow[t * 4 + 1] = 498.0f
+            mLinesLow[t * 4 + 2] = t.toFloat()
+            mLinesLow[t * 4 + 3] = 500.0f
+            t++
+        }
+        for (i in sizeK.indices) {
+            postTextToView(mTextStatus!!, "Running " + sizeK[i] + " K")
+            var rtot = 0.0f
+            var j = 0
+            while (subSteps > j) {
+                var ret = nMemTestLatency(b, (sizeK[i] * 1024).toLong())
+                rtot += ret
+                results[i * subSteps + j] = ret
+                if (400.0f < ret) ret = 400.0f
+                if (0.0f > ret) ret = 0.0f
+                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret
                 //android.util.Log.e("bench", "test bw " + sizeK[i] + " - " + ret);
-                mViewToUpdate.postInvalidate();
+                mViewToUpdate.postInvalidate()
+                j++
             }
-            rtot /= subSteps;
-
+            rtot /= subSteps.toFloat()
             if (2 == sizeK[i]) {
-                postTextToView(mTextMin, "2K " + rtot + " ns");
+                postTextToView(mTextMin!!, "2K $rtot ns")
             }
             if (128 == sizeK[i]) {
-                postTextToView(mTextMax, "128K " + rtot + " ns");
+                postTextToView(mTextMax!!, "128K $rtot ns")
             }
             if (8192 == sizeK[i]) {
-                postTextToView(mTextTypical, "8M " + rtot + " ns");
+                postTextToView(mTextTypical!!, "8M $rtot ns")
             }
-
         }
-
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
+        nMemTestEnd(b)
+        postTextToView(mTextStatus!!, "Done")
     }
 
-    void testCPUGFlops(long b) {
-        int[] sizeK = {1, 2, 3, 4, 5, 6, 7
-        };
-        final int subSteps = 15;
-        float[] results = new float[sizeK.length * subSteps];
-
-        nMemTestStart(b);
-
-        float[] dat = new float[1000];
-        postTextToView(mTextStatus, "Running Memory Latency test");
-        for (int t = 0; 1000 > t; t++) {
-            mLinesLow[t * 4] = t;
-            mLinesLow[t * 4 + 1] = 498.0f;
-            mLinesLow[t * 4 + 2] = t;
-            mLinesLow[t * 4 + 3] = 500.0f;
+    fun testCPUGFlops(b: Long) {
+        val sizeK = intArrayOf(1, 2, 3, 4, 5, 6, 7
+        )
+        val subSteps = 15
+        val results = FloatArray(sizeK.size * subSteps)
+        nMemTestStart(b)
+        val dat = FloatArray(1000)
+        postTextToView(mTextStatus!!, "Running Memory Latency test")
+        var t = 0
+        while (1000 > t) {
+            mLinesLow[t * 4] = t.toFloat()
+            mLinesLow[t * 4 + 1] = 498.0f
+            mLinesLow[t * 4 + 2] = t.toFloat()
+            mLinesLow[t * 4 + 3] = 500.0f
+            t++
         }
-
-        for (int i = 0; i < sizeK.length; i++) {
-            postTextToView(mTextStatus, "Running " + sizeK[i] + " K");
-
-            float rtot = 0.0f;
-            for (int j = 0; subSteps > j; j++) {
-                float ret = nGFlopsTest(b, sizeK[i] * 1024);
-                rtot += ret;
-                results[i * subSteps + j] = ret;
-
-                if (400.0f < ret) ret = 400.0f;
-                if (0.0f > ret) ret = 0.0f;
-                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret;
-                mViewToUpdate.postInvalidate();
+        for (i in sizeK.indices) {
+            postTextToView(mTextStatus!!, "Running " + sizeK[i] + " K")
+            var rtot = 0.0f
+            var j = 0
+            while (subSteps > j) {
+                var ret = nGFlopsTest(b, (sizeK[i] * 1024).toLong())
+                rtot += ret
+                results[i * subSteps + j] = ret
+                if (400.0f < ret) ret = 400.0f
+                if (0.0f > ret) ret = 0.0f
+                mLinesLow[(i * subSteps + j) * 4 + 1] = 499.0f - ret
+                mViewToUpdate.postInvalidate()
+                j++
             }
-            rtot /= subSteps;
-
+            rtot /= subSteps.toFloat()
             if (2 == sizeK[i]) {
-                postTextToView(mTextMin, "2K " + rtot + " ns");
+                postTextToView(mTextMin!!, "2K $rtot ns")
             }
             if (128 == sizeK[i]) {
-                postTextToView(mTextMax, "128K " + rtot + " ns");
+                postTextToView(mTextMax!!, "128K $rtot ns")
             }
             if (8192 == sizeK[i]) {
-                postTextToView(mTextTypical, "8M " + rtot + " ns");
+                postTextToView(mTextTypical!!, "8M $rtot ns")
             }
-
         }
-
-        nMemTestEnd(b);
-        postTextToView(mTextStatus, "Done");
+        nMemTestEnd(b)
+        postTextToView(mTextStatus!!, "Done")
     }
 
-    public void runPowerManagement() {
-        mLT.runCommand(LooperThread.TestPowerManagement);
+    fun runPowerManagement() {
+        mLT.runCommand(LooperThread.TestPowerManagement)
     }
 
-    public void runMemoryBandwidth() {
-        mLT.runCommand(LooperThread.TestMemoryBandwidth);
+    fun runMemoryBandwidth() {
+        mLT.runCommand(LooperThread.TestMemoryBandwidth)
     }
 
-    public void runMemoryLatency() {
-        mLT.runCommand(LooperThread.TestMemoryLatency);
+    fun runMemoryLatency() {
+        mLT.runCommand(LooperThread.TestMemoryLatency)
     }
 
-    public void runCPUHeatSoak() {
-        mLT.runCommand(LooperThread.TestHeatSoak);
+    fun runCPUHeatSoak() {
+        mLT.runCommand(LooperThread.TestHeatSoak)
     }
 
-    public void runCPUGFlops() {
-        mLT.runCommand(LooperThread.TestGFlops);
+    fun runCPUGFlops() {
+        mLT.runCommand(LooperThread.TestGFlops)
+    }
+
+    companion object {
+        init {
+            System.loadLibrary("nativebench")
+        }
     }
 }

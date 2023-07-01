@@ -13,120 +13,190 @@
  * License.
  *
  */
+package com.android.benchmark.appimport
 
-package com.android.benchmark.app;
+import android.graphics.Typeface
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseExpandableListAdapter
+import android.widget.CheckBox
+import android.widget.TextView
+import com.android.benchmark.R
+import com.android.benchmark.registry.BenchmarkGroup
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import com.android.benchmark.registry.BenchmarkRegistry
 
-import android.graphics.Typeface;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseExpandableListAdapter;
-import android.widget.CheckBox;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.android.benchmark.registry.BenchmarkGroup;
-import com.android.benchmark.registry.BenchmarkRegistry;
-import com.android.benchmark.R;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
 /**
  *
  */
-public class BenchmarkListAdapter extends BaseExpandableListAdapter {
-
-    private final LayoutInflater mInflater;
-    private final BenchmarkRegistry mRegistry;
-
-    BenchmarkListAdapter(LayoutInflater inflater,
-                         BenchmarkRegistry registry) {
-        mInflater = inflater;
-        mRegistry = registry;
+class BenchmarkListAdapter internal constructor(private val mInflater: LayoutInflater,
+                                                private val mRegistry: BenchmarkRegistry) : BaseExpandableListAdapter() {
+    override fun getGroupCount(): Int {
+        return mRegistry.groupCount
     }
 
-    @Override
-    public int getGroupCount() {
-        return mRegistry.getGroupCount();
+    override fun getChildrenCount(groupPosition: Int): Int {
+        return mRegistry.getBenchmarkCount(groupPosition)
     }
 
-    @Override
-    public int getChildrenCount(int groupPosition) {
-        return mRegistry.getBenchmarkCount(groupPosition);
+    override fun getGroup(groupPosition: Int): Any {
+        return mRegistry.getBenchmarkGroup(groupPosition)!!
     }
 
-    @Override
-    public Object getGroup(int groupPosition) {
-        return mRegistry.getBenchmarkGroup(groupPosition);
+    override fun getChild(groupPosition: Int, childPosition: Int): Any? {
+        val benchmarkGroup = mRegistry.getBenchmarkGroup(groupPosition)
+        return benchmarkGroup?.benchmarks?.get(childPosition)
     }
 
-    @Nullable
-    @Override
-    public Object getChild(int groupPosition, int childPosition) {
-        BenchmarkGroup benchmarkGroup = mRegistry.getBenchmarkGroup(groupPosition);
-
-        if (null != benchmarkGroup) {
-           return benchmarkGroup.getBenchmarks()[childPosition];
-        }
-
-        return null;
+    override fun getGroupId(groupPosition: Int): Long {
+        return groupPosition.toLong()
     }
 
-    @Override
-    public long getGroupId(int groupPosition) {
-        return groupPosition;
+    override fun getChildId(groupPosition: Int, childPosition: Int): Long {
+        return childPosition.toLong()
     }
 
-    @Override
-    public long getChildId(int groupPosition, int childPosition) {
-        return childPosition;
+    override fun hasStableIds(): Boolean {
+        return false
     }
 
-    @Override
-    public boolean hasStableIds() {
-        return false;
-    }
-
-    @NonNull
-    @Override
-    public View getGroupView(int groupPosition, boolean isExpanded, @Nullable View convertView, ViewGroup parent) {
-        BenchmarkGroup group = (BenchmarkGroup) getGroup(groupPosition);
+    override fun getGroupView(groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup): View {
+        var convertView = convertView
+        val group = getGroup(groupPosition) as BenchmarkGroup
         if (null == convertView) {
-            convertView = mInflater.inflate(R.layout.benchmark_list_group_row, null);
+            convertView = mInflater.inflate(R.layout.benchmark_list_group_row, null)
         }
-
-        TextView title = convertView.findViewById(R.id.group_name);
-        title.setTypeface(null, Typeface.BOLD);
-        title.setText(group.getTitle());
-        return convertView;
+        val title = convertView!!.findViewById<TextView>(R.id.group_name)
+        title.setTypeface(null, Typeface.BOLD)
+        title.text = group.title
+        return convertView
     }
 
-    @NonNull
-    @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
-                             @Nullable View convertView, ViewGroup parent) {
-        BenchmarkGroup.Benchmark benchmark =
-                (BenchmarkGroup.Benchmark) getChild(groupPosition, childPosition);
+    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean,
+                              convertView: View?, parent: ViewGroup): View {
+        var convertView = convertView
+        val benchmark = getChild(groupPosition, childPosition) as Benchmark?
         if (null == convertView) {
-            convertView = mInflater.inflate(R.layout.benchmark_list_item, null);
+            convertView = mInflater.inflate(R.layout.benchmark_list_item, null)
         }
-
-        TextView name = convertView.findViewById(R.id.benchmark_name);
-        name.setText(benchmark.getName());
-        CheckBox enabledBox = convertView.findViewById(R.id.benchmark_enable_checkbox);
-        enabledBox.setOnClickListener(benchmark);
-        enabledBox.setChecked(benchmark.isEnabled());
-
-        return convertView;
+        val name = convertView!!.findViewById<TextView>(R.id.benchmark_name)
+        name.text = benchmark!!.name
+        val enabledBox = convertView.findViewById<CheckBox>(R.id.benchmark_enable_checkbox)
+        enabledBox.setOnClickListener(benchmark)
+        enabledBox.isChecked = benchmark.isEnabled
+        return convertView
     }
 
-    @Override
-    public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return true;
+    override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
+        return true
     }
 
-    public int getChildrenHeight() {
-        // TODO
-        return 1024;
-    }
+    // TODO
+    val childrenHeight: Int
+        get() =// TODO
+            1024
 }

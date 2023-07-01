@@ -13,158 +13,131 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.ui.automation
 
-package com.android.benchmark.ui.automation;
+import android.annotation.TargetApiimport
 
-import android.annotation.TargetApi;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
-import android.os.SystemClock;
-import android.view.FrameMetrics;
-import android.view.Window;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.lang.ref.WeakReference;
-import java.util.LinkedList;
-import java.util.List;
-
+android.os.Handlerimport android.os.HandlerThreadimport android.os.Messageimport android.os.SystemClockimport android.view.FrameMetricsimport android.view.Windowimport android.view.Window.OnFrameMetricsAvailableListenerimport java.lang.ref.WeakReferenceimport java.util.LinkedList
 /**
  *
  */
-final class CollectorThread extends HandlerThread {
-    private FrameStatsCollector mCollector;
-    @Nullable
-    private Window mAttachedWindow;
-    @NonNull
-    private final List<FrameMetrics> mFrameTimingStats;
-    private long mLastFrameTime;
-    private WatchdogHandler mWatchdog;
-    @NonNull
-    private final WeakReference<CollectorListener> mListener;
+internal class CollectorThread(listener: CollectorListener) : HandlerThread("FrameStatsCollectorThread") {
+    private var mCollector: FrameStatsCollector? = null
+    private var mAttachedWindow: Window? = null
+    private val mFrameTimingStats: MutableList<FrameMetrics?>
+    private var mLastFrameTime: Long = 0
+    private var mWatchdog: WatchdogHandler? = null
+    private val mListener: WeakReference<CollectorListener>
 
-    private volatile boolean mCollecting;
+    @Volatile
+    private var mCollecting = false
 
-
-    interface CollectorListener {
-        void onCollectorThreadReady();
-        void onPostInteraction(List<FrameMetrics> stats);
+    internal interface CollectorListener {
+        fun onCollectorThreadReady()
+        fun onPostInteraction(stats: List<FrameMetrics?>?)
     }
 
-    private final class WatchdogHandler extends Handler {
-        private static final long SCHEDULE_INTERVAL_MILLIS = 20 * Automator.FRAME_PERIOD_MILLIS;
-
-        private static final int MSG_SCHEDULE = 0;
-
-        @Override
-        public void handleMessage(Message msg) {
+    private inner class WatchdogHandler : Handler() {
+        override fun handleMessage(msg: Message) {
             if (!mCollecting) {
-                return;
+                return
             }
-
-            long currentTime = SystemClock.uptimeMillis();
-            if (mLastFrameTime + SCHEDULE_INTERVAL_MILLIS <= currentTime) {
+            val currentTime = SystemClock.uptimeMillis()
+            if (mLastFrameTime + Companion.SCHEDULE_INTERVAL_MILLIS <= currentTime) {
                 // haven't seen a frame in a while, interaction is probably done
-                mCollecting = false;
-                CollectorListener listener = mListener.get();
-                if (null != listener) {
-                    listener.onPostInteraction(mFrameTimingStats);
-                }
+                mCollecting = false
+                val listener = mListener.get()
+                listener?.onPostInteraction(mFrameTimingStats)
             } else {
-                schedule();
+                schedule()
             }
         }
 
-        public void schedule() {
-            sendMessageDelayed(obtainMessage(MSG_SCHEDULE), SCHEDULE_INTERVAL_MILLIS);
+        fun schedule() {
+            sendMessageDelayed(obtainMessage(Companion.MSG_SCHEDULE), Companion.SCHEDULE_INTERVAL_MILLIS)
         }
 
-        public void deschedule() {
-            removeMessages(MSG_SCHEDULE);
+        fun deschedule() {
+            removeMessages(Companion.MSG_SCHEDULE)
+        }
+
+        companion object {
+            private val SCHEDULE_INTERVAL_MILLIS: Long = 20 * Automator.Companion.FRAME_PERIOD_MILLIS
+            private const val MSG_SCHEDULE = 0
         }
     }
 
-    static boolean tripleBuffered;
-    static int janks;
-    static int total;
     @TargetApi(24)
-    private class FrameStatsCollector implements Window.OnFrameMetricsAvailableListener {
-        @Override
-        public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+    private inner class FrameStatsCollector : OnFrameMetricsAvailableListener {
+        override fun onFrameMetricsAvailable(window: Window, frameMetrics: FrameMetrics, dropCount: Int) {
             if (!mCollecting) {
-                return;
+                return
             }
-            mFrameTimingStats.add(new FrameMetrics(frameMetrics));
-            mLastFrameTime = SystemClock.uptimeMillis();
+            mFrameTimingStats.add(FrameMetrics(frameMetrics))
+            mLastFrameTime = SystemClock.uptimeMillis()
         }
     }
 
-    public CollectorThread(CollectorListener listener) {
-        super("FrameStatsCollectorThread");
-        mFrameTimingStats = new LinkedList<>();
-        mListener = new WeakReference<>(listener);
+    init {
+        mFrameTimingStats = LinkedList()
+        mListener = WeakReference(listener)
     }
 
     @TargetApi(24)
-    public void attachToWindow(@NonNull Window window) {
-        if (null != this.mAttachedWindow) {
-            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
+    fun attachToWindow(window: Window) {
+        if (null != mAttachedWindow) {
+            mAttachedWindow!!.removeOnFrameMetricsAvailableListener(mCollector)
         }
-
-        mAttachedWindow = window;
-        window.addOnFrameMetricsAvailableListener(mCollector, new Handler(getLooper()));
+        mAttachedWindow = window
+        window.addOnFrameMetricsAvailableListener(mCollector!!, Handler(looper))
     }
 
     @TargetApi(24)
-    public synchronized void detachFromWindow() {
-        if (null != this.mAttachedWindow) {
-            mAttachedWindow.removeOnFrameMetricsAvailableListener(mCollector);
+    @Synchronized
+    fun detachFromWindow() {
+        if (null != mAttachedWindow) {
+            mAttachedWindow!!.removeOnFrameMetricsAvailableListener(mCollector)
         }
-
-        mAttachedWindow = null;
+        mAttachedWindow = null
     }
 
     @TargetApi(24)
-    @Override
-    protected void onLooperPrepared() {
-        super.onLooperPrepared();
-        mCollector = new FrameStatsCollector();
-        mWatchdog = new WatchdogHandler();
-
-        CollectorListener listener = mListener.get();
-        if (null != listener) {
-            listener.onCollectorThreadReady();
-        }
+    override fun onLooperPrepared() {
+        super.onLooperPrepared()
+        mCollector = FrameStatsCollector()
+        mWatchdog = WatchdogHandler()
+        val listener = mListener.get()
+        listener?.onCollectorThreadReady()
     }
 
-    public boolean quitCollector() {
-        stopCollecting();
-        detachFromWindow();
-        System.out.println("Jank Percentage: " + (100 * janks / (double) total) + "%");
-        tripleBuffered = false;
-        total = 0;
-        janks = 0;
-        return quit();
+    fun quitCollector(): Boolean {
+        stopCollecting()
+        detachFromWindow()
+        println("Jank Percentage: " + 100 * janks / total.toDouble() + "%")
+        tripleBuffered = false
+        total = 0
+        janks = 0
+        return quit()
     }
 
-    void stopCollecting() {
+    fun stopCollecting() {
         if (!mCollecting) {
-            return;
+            return
         }
-
-        mCollecting = false;
-        mWatchdog.deschedule();
-
-
+        mCollecting = false
+        mWatchdog!!.deschedule()
     }
 
-    public void markInteractionStart() {
-        mLastFrameTime = 0;
-        mFrameTimingStats.clear();
-        mCollecting = true;
+    fun markInteractionStart() {
+        mLastFrameTime = 0
+        mFrameTimingStats.clear()
+        mCollecting = true
+        mWatchdog!!.schedule()
+    }
 
-        mWatchdog.schedule();
+    companion object {
+        var tripleBuffered = false
+        var janks = 0
+        var total = 0
     }
 }

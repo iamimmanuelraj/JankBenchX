@@ -1,188 +1,176 @@
-package com.android.benchmark.models;
+package com.android.benchmark.modelsimport
 
-import java.util.List;
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import androidx.annotation.Keep
+import com.android.benchmark.models.Result
+import com.google.gson.annotations.Expose
+import com.google.gson.annotations.SerializedName
 
-import androidx.annotation.Keep;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
 @Keep
-public class Entry {
-
+class Entry {
     @SerializedName("run_id")
     @Expose
-    private Integer runId;
+    var runId: Int? = null
+
     @SerializedName("benchmark_version")
     @Expose
-    private String benchmarkVersion;
+    var benchmarkVersion: String? = null
+
     @SerializedName("device_name")
     @Expose
-    private String device_name;
+    var deviceName: String? = null
+
     @SerializedName("device_model")
     @Expose
-    private String deviceModel;
+    var deviceModel: String? = null
+
     @SerializedName("device_product")
     @Expose
-    private String deviceProduct;
+    var deviceProduct: String? = null
+
     @SerializedName("device_board")
     @Expose
-    private String deviceBoard;
+    var deviceBoard: String? = null
+
     @SerializedName("device_manufacturer")
     @Expose
-    private String deviceManufacturer;
+    var deviceManufacturer: String? = null
+
     @SerializedName("device_brand")
     @Expose
-    private String deviceBrand;
+    var deviceBrand: String? = null
+
     @SerializedName("device_hardware")
     @Expose
-    private String deviceHardware;
+    var deviceHardware: String? = null
+
     @SerializedName("android_version")
     @Expose
-    private String androidVersion;
+    var androidVersion: String? = null
+
     @SerializedName("build_type")
     @Expose
-    private String buildType;
+    var buildType: String? = null
+
     @SerializedName("build_time")
     @Expose
-    private String buildTime;
+    var buildTime: String? = null
+
     @SerializedName("fingerprint")
     @Expose
-    private String fingerprint;
+    var fingerprint: String? = null
+
     @SerializedName("kernel_version")
     @Expose
-    private String kernelVersion;
+    var kernelVersion: String? = null
+
     @SerializedName("results")
     @Expose
-    private List<Result> results;
+    var results: List<Result>? = null
+
     @SerializedName("refresh_rate")
     @Expose
-    private Integer refreshRate;
-
-    public Integer getRunId() {
-        return runId;
-    }
-
-    public void setRunId(Integer runId) {
-        this.runId = runId;
-    }
-
-    public String getBenchmarkVersion() {
-        return benchmarkVersion;
-    }
-
-    public void setBenchmarkVersion(String benchmarkVersion) {
-        this.benchmarkVersion = benchmarkVersion;
-    }
-
-    public String getDeviceName() {
-        return device_name;
-    }
-
-    public void setDeviceName(String device_name) {
-        this.device_name = device_name;
-    }
-
-    public String getDeviceModel() {
-        return deviceModel;
-    }
-
-    public void setDeviceModel(String deviceModel) {
-        this.deviceModel = deviceModel;
-    }
-
-    public String getDeviceProduct() {
-        return deviceProduct;
-    }
-
-    public void setDeviceProduct(String deviceProduct) {
-        this.deviceProduct = deviceProduct;
-    }
-
-    public String getDeviceBoard() {
-        return deviceBoard;
-    }
-
-    public void setDeviceBoard(String deviceBoard) {
-        this.deviceBoard = deviceBoard;
-    }
-
-    public String getDeviceManufacturer() {
-        return deviceManufacturer;
-    }
-
-    public void setDeviceManufacturer(String deviceManufacturer) {
-        this.deviceManufacturer = deviceManufacturer;
-    }
-
-    public String getDeviceBrand() {
-        return deviceBrand;
-    }
-
-    public void setDeviceBrand(String deviceBrand) {
-        this.deviceBrand = deviceBrand;
-    }
-
-    public String getDeviceHardware() {
-        return deviceHardware;
-    }
-
-    public void setDeviceHardware(String deviceHardware) {
-        this.deviceHardware = deviceHardware;
-    }
-
-    public String getAndroidVersion() {
-        return androidVersion;
-    }
-
-    public void setAndroidVersion(String androidVersion) {
-        this.androidVersion = androidVersion;
-    }
-
-    public String getBuildType() {
-        return buildType;
-    }
-
-    public void setBuildType(String buildType) {
-        this.buildType = buildType;
-    }
-
-    public String getBuildTime() {
-        return buildTime;
-    }
-
-    public void setBuildTime(String buildTime) {
-        this.buildTime = buildTime;
-    }
-
-    public String getFingerprint() {
-        return fingerprint;
-    }
-
-    public void setFingerprint(String fingerprint) {
-        this.fingerprint = fingerprint;
-    }
-
-    public String getKernelVersion() {
-        return kernelVersion;
-    }
-
-    public void setKernelVersion(String kernelVersion) {
-        this.kernelVersion = kernelVersion;
-    }
-
-    public List<Result> getResults() {
-        return results;
-    }
-
-    public void setResults(List<Result> results) {
-        this.results = results;
-    }
-
-    public int getRefreshRate() {
-        return refreshRate;
-    }
-
-    public void setRefreshRate(int refreshRate) {
-        this.refreshRate = refreshRate;
-    }
+    var refreshRate: Int? = null
 }

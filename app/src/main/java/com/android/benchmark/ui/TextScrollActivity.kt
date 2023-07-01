@@ -13,112 +13,77 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.content.Intentimport
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
-import android.widget.ListView;
+android.os.Bundleimport android.widget.ArrayAdapterimport android.widget.ListAdapterimport android.widget.ListViewimport com.android.benchmark.registry.BenchmarkRegistryimport com.android.benchmark.ui.automation.Automatorimport com.android.benchmark.ui.automation.Automator.AutomateCallbackimport com.android.benchmark.ui.automation.Interaction
+class TextScrollActivity : ListActivityBase() {
+    private var mHitPercentage = 100
+    private var mAutomator: Automator? = null
+    protected override var name: String? = null
+        private set
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.android.benchmark.registry.BenchmarkRegistry;
-import com.android.benchmark.ui.automation.Automator;
-import com.android.benchmark.ui.automation.Interaction;
-
-import java.io.File;
-
-public class TextScrollActivity extends ListActivityBase {
-
-    public static final String EXTRA_HIT_RATE = ".TextScrollActivity.EXTRA_HIT_RATE";
-
-    private static final int PARAGRAPH_COUNT = 200;
-
-    private int mHitPercentage = 100;
-    @Nullable
-    private Automator mAutomator;
-    private String mName;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        mHitPercentage = getIntent().getIntExtra(EXTRA_HIT_RATE,
-                mHitPercentage);
-        super.onCreate(savedInstanceState);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
-        final int id = getIntent().getIntExtra(BenchmarkRegistry.EXTRA_ID, -1);
-
+    override fun onCreate(savedInstanceState: Bundle?) {
+        mHitPercentage = intent.getIntExtra(EXTRA_HIT_RATE,
+                mHitPercentage)
+        super.onCreate(savedInstanceState)
+        val runId = intent.getIntExtra("com.android.benchmark.RUN_ID", 0)
+        val iteration = intent.getIntExtra("com.android.benchmark.ITERATION", -1)
+        val id = intent.getIntExtra(BenchmarkRegistry.Companion.EXTRA_ID, -1)
         if (-1 == id) {
-            finish();
-            return;
+            finish()
+            return
         }
+        name = BenchmarkRegistry.Companion.getBenchmarkName(this, id)
+        mAutomator = Automator(name, runId, iteration, window,
+                object : AutomateCallback() {
+                    override fun onPostAutomate() {
+                        val result = Intent()
+                        setResult(RESULT_OK, result)
+                        finish()
+                    }
 
-        mName = BenchmarkRegistry.getBenchmarkName(this, id);
-
-        mAutomator = new Automator(this.mName, runId, iteration, getWindow(),
-                new Automator.AutomateCallback() {
-            @Override
-            public void onPostAutomate() {
-                Intent result = new Intent();
-                setResult(Activity.RESULT_OK, result);
-                finish();
-            }
-
-            @Override
-            public void onAutomate() {
-                ListView v = findViewById(android.R.id.list);
-
-                int[] coordinates = new int[2];
-                v.getLocationOnScreen(coordinates);
-
-                int x = coordinates[0];
-                int y = coordinates[1];
-
-                float width = v.getWidth();
-                float height = v.getHeight();
-
-                float middleX = (x + width) / 2;
-                float middleY = (y + height) / 2;
-
-                Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
-                Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
-
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-                addInteraction(flingUp);
-                addInteraction(flingDown);
-            }
-        });
-
-        mAutomator.start();
+                    override fun onAutomate() {
+                        val v = findViewById<ListView>(android.R.id.list)
+                        val coordinates = IntArray(2)
+                        v.getLocationOnScreen(coordinates)
+                        val x = coordinates[0]
+                        val y = coordinates[1]
+                        val width = v.width.toFloat()
+                        val height = v.height.toFloat()
+                        val middleX = (x + width) / 2
+                        val middleY = (y + height) / 2
+                        val flingUp: Interaction = Interaction.Companion.newFlingUp(middleX, middleY)
+                        val flingDown: Interaction = Interaction.Companion.newFlingDown(middleX, middleY)
+                        addInteraction(flingUp)
+                        addInteraction(flingDown)
+                        addInteraction(flingUp)
+                        addInteraction(flingDown)
+                        addInteraction(flingUp)
+                        addInteraction(flingDown)
+                        addInteraction(flingUp)
+                        addInteraction(flingDown)
+                    }
+                })
+        mAutomator!!.start()
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (null != this.mAutomator) {
-            mAutomator.cancel();
-            mAutomator = null;
+    override fun onPause() {
+        super.onPause()
+        if (null != mAutomator) {
+            mAutomator!!.cancel()
+            mAutomator = null
         }
     }
 
-    @NonNull
-    @Override
-    protected ListAdapter createListAdapter() {
-        return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
-                Utils.buildParagraphListWithHitPercentage(PARAGRAPH_COUNT, 80));
+    override fun createListAdapter(): ListAdapter {
+        return ArrayAdapter<String?>(this, android.R.layout.simple_list_item_1,
+                Utils.Companion.buildParagraphListWithHitPercentage(PARAGRAPH_COUNT, 80))
     }
 
-    @Override
-    protected String getName() {
-        return mName;
+    companion object {
+        const val EXTRA_HIT_RATE = ".TextScrollActivity.EXTRA_HIT_RATE"
+        private const val PARAGRAPH_COUNT = 200
     }
 }

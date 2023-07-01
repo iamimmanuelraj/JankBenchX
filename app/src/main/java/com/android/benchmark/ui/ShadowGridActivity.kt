@@ -13,100 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.benchmark.ui;
+package com.android.benchmark.ui
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
+import android.content.Intentimport
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.ListFragment;
-import androidx.appcompat.app.AppCompatActivity;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+android.os.Bundleimport android.view.Viewimport android.widget.ArrayAdapterimport android.widget.ListViewimport androidx.appcompat.app.AppCompatActivityimport androidx.fragment.app.ListFragmentimport com.android.benchmark.Rimport com.android.benchmark.ui.automation.Automatorimport com.android.benchmark.ui.automation.Automator.AutomateCallbackimport com.android.benchmark.ui.automation.Interaction
+class ShadowGridActivity : AppCompatActivity() {
+    private var mAutomator: Automator? = null
 
-import com.android.benchmark.R;
-import com.android.benchmark.ui.automation.Automator;
-import com.android.benchmark.ui.automation.Interaction;
-
-public class ShadowGridActivity extends AppCompatActivity {
-    @Nullable
-    private Automator mAutomator;
-    public static class MyListFragment extends ListFragment {
-	    @Override
-	    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-		    super.onViewCreated(view, savedInstanceState);
-            getListView().setDivider(null);
-	    }
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
-
-        FragmentManager fm = getSupportFragmentManager();
-        if (null == fm.findFragmentById(android.R.id.content)) {
-            ListFragment listFragment = new MyListFragment();
-
-            listFragment.setListAdapter(new ArrayAdapter<>(this,
-                    R.layout.card_row, R.id.card_text, Utils.buildStringList(200)));
-            fm.beginTransaction().add(android.R.id.content, listFragment).commit();
-
-            String testName = getString(R.string.shadow_grid_name);
-
-            mAutomator = new Automator(testName, runId, iteration, getWindow(),
-                    new Automator.AutomateCallback() {
-                @Override
-                public void onPostAutomate() {
-                    Intent result = new Intent();
-                    setResult(Activity.RESULT_OK, result);
-                    finish();
-                }
-
-                @Override
-                public void onAutomate() {
-                    ListView v = findViewById(android.R.id.list);
-
-                    int[] coordinates = new int[2];
-                    v.getLocationOnScreen(coordinates);
-
-                    int x = coordinates[0];
-                    int y = coordinates[1];
-
-                    float width = v.getWidth();
-                    float height = v.getHeight();
-
-                    float middleX = (x + width) / 2;
-                    float middleY = (y + height) / 2;
-
-                    Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
-                    Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
-
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
-                }
-            });
-            mAutomator.start();
+    class MyListFragment : ListFragment() {
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+            listView.divider = null
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (null != this.mAutomator) {
-            mAutomator.cancel();
-            mAutomator = null;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val runId = intent.getIntExtra("com.android.benchmark.RUN_ID", 0)
+        val iteration = intent.getIntExtra("com.android.benchmark.ITERATION", -1)
+        val fm = supportFragmentManager
+        if (null == fm.findFragmentById(android.R.id.content)) {
+            val listFragment: ListFragment = MyListFragment()
+            listFragment.listAdapter = ArrayAdapter<String?>(this,
+                    R.layout.card_row, R.id.card_text, Utils.Companion.buildStringList(200))
+            fm.beginTransaction().add(android.R.id.content, listFragment).commit()
+            val testName = getString(R.string.shadow_grid_name)
+            mAutomator = Automator(testName, runId, iteration, window,
+                    object : AutomateCallback() {
+                        override fun onPostAutomate() {
+                            val result = Intent()
+                            setResult(RESULT_OK, result)
+                            finish()
+                        }
+
+                        override fun onAutomate() {
+                            val v = findViewById<ListView>(android.R.id.list)
+                            val coordinates = IntArray(2)
+                            v.getLocationOnScreen(coordinates)
+                            val x = coordinates[0]
+                            val y = coordinates[1]
+                            val width = v.width.toFloat()
+                            val height = v.height.toFloat()
+                            val middleX = (x + width) / 2
+                            val middleY = (y + height) / 2
+                            val flingUp: Interaction = Interaction.Companion.newFlingUp(middleX, middleY)
+                            val flingDown: Interaction = Interaction.Companion.newFlingDown(middleX, middleY)
+                            addInteraction(flingUp)
+                            addInteraction(flingDown)
+                            addInteraction(flingUp)
+                            addInteraction(flingDown)
+                            addInteraction(flingUp)
+                            addInteraction(flingDown)
+                            addInteraction(flingUp)
+                            addInteraction(flingDown)
+                        }
+                    })
+            mAutomator!!.start()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (null != mAutomator) {
+            mAutomator!!.cancel()
+            mAutomator = null
         }
     }
 }

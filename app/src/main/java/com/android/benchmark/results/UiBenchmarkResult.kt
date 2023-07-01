@@ -13,267 +13,335 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.resultsimport
 
-package com.android.benchmark.results;
+import android.view.FrameMetrics
+import com.android.benchmark.results.UiBenchmarkResult
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 
-import android.annotation.TargetApi;
-import android.view.FrameMetrics;
-
-import androidx.annotation.NonNull;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
-import java.util.ArrayList;
-import java.util.List;
+android.annotation .TargetApi
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import android.os.HandlerThread
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import com.android.benchmark.ui.automation.CollectorThread.CollectorListener
+import com.android.benchmark.ui.automation.Automator.AutomatorHandler
+import com.android.benchmark.ui.automation.CollectorThread
+import android.view.FrameMetrics
+import com.android.benchmark.ui.automation.Interaction
+import android.os.Looper
+import kotlin.jvm.Volatile
+import com.android.benchmark.results.UiBenchmarkResult
+import android.view.MotionEvent
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.results.GlobalResultsStore
+import android.hardware.display.DisplayManager
+import androidx.annotation.IntDef
+import com.android.benchmark.ui.automation.CollectorThread.FrameStatsCollector
+import com.android.benchmark.ui.automation.CollectorThread.WatchdogHandler
+import android.view.Window.OnFrameMetricsAvailableListener
+import kotlin.jvm.Synchronized
+import kotlin.Throws
+import android.graphics.BitmapFactory
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.android.benchmark.R
+import com.android.benchmark.ui.ShadowGridActivity.MyListFragment
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.app.Activity
+import com.android.benchmark.ui.ListActivityBase
+import com.android.benchmark.ui.TextScrollActivity
+import com.android.benchmark.registry.BenchmarkRegistry
+import android.util.DisplayMetrics
+import android.view.View.OnTouchListener
+import com.android.benchmark.ui.BitmapUploadActivity.UploadView
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.widget.EditText
+import android.widget.FrameLayout
+import com.android.benchmark.ui.ListViewScrollActivity
+import androidx.annotation.Keep
+import com.android.benchmark.ui.FullScreenOverdrawActivity.OverdrawView
+import com.android.benchmark.ui.ImageListViewScrollActivity.BitmapWorkerTask
+import com.android.benchmark.ui.ImageListViewScrollActivity.ImageListAdapter
+import android.os.AsyncTask
+import com.android.benchmark.ui.ImageListViewScrollActivity
+import android.widget.BaseAdapter
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.widget.TextView
+import com.android.benchmark.api.JankBenchAPI
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.android.benchmark.api.JankBenchService
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
+import com.topjohnwu.superuser.Shell
+import retrofit2.http.POST
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.widget.ExpandableListView
+import com.android.benchmark.app.BenchmarkListAdapter
+import android.widget.Toast
+import android.text.TextPaint
+import android.content.res.TypedArray
+import com.android.benchmark.app.UiResultsFragment
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import android.widget.SimpleAdapter
+import android.widget.BaseExpandableListAdapter
+import com.android.benchmark.registry.BenchmarkGroup
+import android.graphics.Typeface
+import com.android.benchmark.registry.BenchmarkGroup.Benchmark
+import android.widget.CheckBox
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmark
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksList
+import com.android.benchmark.app.RunLocalBenchmarksActivity.LocalBenchmarksListAdapter
+import com.android.benchmark.app.RunLocalBenchmarksActivity
+import com.android.benchmark.ui.ShadowGridActivity
+import com.android.benchmark.ui.EditTextInputActivity
+import com.android.benchmark.ui.FullScreenOverdrawActivity
+import com.android.benchmark.ui.BitmapUploadActivity
+import com.android.benchmark.synthetic.MemoryActivity
+import com.google.gson.annotations.SerializedName
+import com.google.gson.annotations.Expose
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import android.database.sqlite.SQLiteOpenHelper
+import android.content.ContentValues
+import android.content.ComponentName
+import com.android.benchmark.registry.BenchmarkCategory
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import org.xmlpull.v1.XmlPullParserException
+import org.xmlpull.v1.XmlPullParser
+import android.util.SparseArray
+import android.util.Xml
+import com.android.benchmark.synthetic.TestInterface.TestResultCallback
+import com.android.benchmark.synthetic.TestInterface.LooperThread
+import com.android.benchmark.synthetic.TestInterface
+import com.android.benchmark.app.PerfTimeline
+import com.android.benchmark.synthetic.MemoryActivity.SyntheticTestCallback
+import android.view.WindowManager
 
 /**
  * Utility for storing and analyzing UI benchmark results.
  */
 @TargetApi(24)
-public class UiBenchmarkResult {
-    private final int BASE_SCORE = 100;
-    private final int CONSISTENCY_BONUS_MAX = 100;
+class UiBenchmarkResult {
+    private val BASE_SCORE = 100
+    private val CONSISTENCY_BONUS_MAX = 100
+    private var FRAME_PERIOD_MS = 16
+    private var ZERO_SCORE_TOTAL_DURATION_MS = 2 * FRAME_PERIOD_MS
+    private var JANK_PENALTY_THRESHOLD_MS = Math.floor(0.75 * FRAME_PERIOD_MS).toInt()
+    private var ZERO_SCORE_ABOVE_THRESHOLD_MS = ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS
+    private var JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = BASE_SCORE / ZERO_SCORE_ABOVE_THRESHOLD_MS.toDouble()
+    private val mStoredStatistics: Array<DescriptiveStatistics?>
 
-    private int FRAME_PERIOD_MS = 16;
-    private int ZERO_SCORE_TOTAL_DURATION_MS = 2 * FRAME_PERIOD_MS;
-    private int JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * FRAME_PERIOD_MS);
-    private int ZERO_SCORE_ABOVE_THRESHOLD_MS =
-            ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS;
-    private double JANK_PENALTY_PER_MS_ABOVE_THRESHOLD =
-            BASE_SCORE / (double) ZERO_SCORE_ABOVE_THRESHOLD_MS;
-
-    private static final int METRIC_WAS_JANKY = -1;
-
-    private static final int[] METRICS = {
-            FrameMetrics.UNKNOWN_DELAY_DURATION,
-            FrameMetrics.INPUT_HANDLING_DURATION,
-            FrameMetrics.ANIMATION_DURATION,
-            FrameMetrics.LAYOUT_MEASURE_DURATION,
-            FrameMetrics.DRAW_DURATION,
-            FrameMetrics.SYNC_DURATION,
-            FrameMetrics.COMMAND_ISSUE_DURATION,
-            FrameMetrics.SWAP_BUFFERS_DURATION,
-            FrameMetrics.TOTAL_DURATION,
-    };
-
-    @NonNull
-    private final DescriptiveStatistics[] mStoredStatistics;
-
-    public UiBenchmarkResult(@NonNull List<FrameMetrics> instances, int refresh_rate) {
-        initializeThresholds(refresh_rate);
-        mStoredStatistics = new DescriptiveStatistics[METRICS.length];
-        insertMetrics(instances);
+    constructor(instances: List<FrameMetrics>, refresh_rate: Int) {
+        initializeThresholds(refresh_rate)
+        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(UiBenchmarkResult.Companion.METRICS.size)
+        insertMetrics(instances)
     }
 
-    public UiBenchmarkResult(@NonNull double[] values, int refresh_rate) {
-        initializeThresholds(refresh_rate);
-        mStoredStatistics = new DescriptiveStatistics[METRICS.length];
-        insertValues(values);
+    constructor(values: DoubleArray, refresh_rate: Int) {
+        initializeThresholds(refresh_rate)
+        mStoredStatistics = arrayOfNulls<DescriptiveStatistics>(UiBenchmarkResult.Companion.METRICS.size)
+        insertValues(values)
     }
 
     // Dynamically set threshold values based on display refresh rate
-    private void initializeThresholds(int refresh_rate) {
-        FRAME_PERIOD_MS = Math.floorDiv(1000, refresh_rate);
-        ZERO_SCORE_TOTAL_DURATION_MS = FRAME_PERIOD_MS * 2;
-        JANK_PENALTY_THRESHOLD_MS = (int) Math.floor(0.75 * FRAME_PERIOD_MS);
-        ZERO_SCORE_ABOVE_THRESHOLD_MS = ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS;
-        JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = BASE_SCORE / (double) ZERO_SCORE_ABOVE_THRESHOLD_MS;
+    private fun initializeThresholds(refresh_rate: Int) {
+        FRAME_PERIOD_MS = Math.floorDiv(1000, refresh_rate)
+        ZERO_SCORE_TOTAL_DURATION_MS = FRAME_PERIOD_MS * 2
+        JANK_PENALTY_THRESHOLD_MS = Math.floor(0.75 * FRAME_PERIOD_MS).toInt()
+        ZERO_SCORE_ABOVE_THRESHOLD_MS = ZERO_SCORE_TOTAL_DURATION_MS - JANK_PENALTY_THRESHOLD_MS
+        JANK_PENALTY_PER_MS_ABOVE_THRESHOLD = BASE_SCORE / ZERO_SCORE_ABOVE_THRESHOLD_MS.toDouble()
     }
 
-    public void update(@NonNull List<FrameMetrics> instances) {
-        insertMetrics(instances);
+    fun update(instances: List<FrameMetrics>) {
+        insertMetrics(instances)
     }
 
-    public void update(@NonNull double[] values) {
-        insertValues(values);
+    fun update(values: DoubleArray) {
+        insertValues(values)
     }
 
-    public double getAverage(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMean();
+    fun getAverage(id: Int): Double {
+        val pos = getMetricPosition(id)
+        return mStoredStatistics[pos]!!.mean
     }
 
-    public double getMinimum(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMin();
+    fun getMinimum(id: Int): Double {
+        val pos = getMetricPosition(id)
+        return mStoredStatistics[pos]!!.min
     }
 
-    public double getMaximum(int id) {
-        int pos = getMetricPosition(id);
-        return mStoredStatistics[pos].getMax();
+    fun getMaximum(id: Int): Double {
+        val pos = getMetricPosition(id)
+        return mStoredStatistics[pos]!!.max
     }
 
-    public int getMaximumIndex(int id) {
-        int pos = getMetricPosition(id);
-        double[] storedMetrics = mStoredStatistics[pos].getValues();
-        int maxIdx = 0;
-        for (int i = 0; i < storedMetrics.length; i++) {
+    fun getMaximumIndex(id: Int): Int {
+        val pos = getMetricPosition(id)
+        val storedMetrics = mStoredStatistics[pos]!!.values
+        var maxIdx = 0
+        for (i in storedMetrics.indices) {
             if (storedMetrics[i] >= storedMetrics[maxIdx]) {
-                maxIdx = i;
+                maxIdx = i
             }
         }
-
-        return maxIdx;
+        return maxIdx
     }
 
-    public double getMetricAtIndex(int index, int metricId) {
-        return mStoredStatistics[getMetricPosition(metricId)].getElement(index);
+    fun getMetricAtIndex(index: Int, metricId: Int): Double {
+        return mStoredStatistics[getMetricPosition(metricId)]!!.getElement(index)
     }
 
-    public double getPercentile(int id, int percentile) {
-        if (100 < percentile) percentile = 100;
-        if (0 > percentile) percentile = 0;
-
-        int metricPos = getMetricPosition(id);
-        return mStoredStatistics[metricPos].getPercentile(percentile);
+    fun getPercentile(id: Int, percentile: Int): Double {
+        var percentile = percentile
+        if (100 < percentile) percentile = 100
+        if (0 > percentile) percentile = 0
+        val metricPos = getMetricPosition(id)
+        return mStoredStatistics[metricPos]!!.getPercentile(percentile.toDouble())
     }
 
-    public int getTotalFrameCount() {
-        if (0 == this.mStoredStatistics.length) {
-            return 0;
+    val totalFrameCount: Int
+        get() = if (0 == mStoredStatistics.size) {
+            0
+        } else mStoredStatistics[0]!!.n.toInt()
+    val score: Int
+        get() {
+            val badFramesStats = SummaryStatistics()
+            val totalFrameCount = totalFrameCount
+            for (i in 0 until totalFrameCount) {
+                val totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION)
+                if (totalDuration >= JANK_PENALTY_THRESHOLD_MS) {
+                    badFramesStats.addValue(totalDuration)
+                }
+            }
+            val length = getSortedJankFrameIndices().size
+            val jankFrameCount = 100 * length / totalFrameCount.toDouble()
+            println("Mean: " + badFramesStats.mean + " JankP: " + jankFrameCount
+                    + " StdDev: " + badFramesStats.standardDeviation +
+                    " Count Bad: " + badFramesStats.n + " Count Jank: " + length)
+            return Math.round(
+                    badFramesStats.mean * jankFrameCount * badFramesStats.standardDeviation).toInt()
         }
 
-        return (int) mStoredStatistics[0].getN();
+    fun getNumJankFrames(): Int {
+        return getSortedJankFrameIndices().size
     }
 
-    public int getScore() {
-        SummaryStatistics badFramesStats = new SummaryStatistics();
-
-        int totalFrameCount = getTotalFrameCount();
-        for (int i = 0; i < totalFrameCount; i++) {
-            double totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
+    fun getNumBadFrames(): Int {
+        var num_bad_frames = 0
+        val totalFrameCount = totalFrameCount
+        for (i in 0 until totalFrameCount) {
+            val totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION)
             if (totalDuration >= JANK_PENALTY_THRESHOLD_MS) {
-                badFramesStats.addValue(totalDuration);
+                num_bad_frames++
             }
         }
-
-        int length = getSortedJankFrameIndices().length;
-        double jankFrameCount = 100 * length / (double) totalFrameCount;
-
-        System.out.println("Mean: " + badFramesStats.getMean() + " JankP: " + jankFrameCount
-                + " StdDev: " + badFramesStats.getStandardDeviation() +
-                " Count Bad: " + badFramesStats.getN() + " Count Jank: " + length);
-
-        return (int) Math.round(
-                (badFramesStats.getMean()) * jankFrameCount * badFramesStats.getStandardDeviation());
+        return num_bad_frames
     }
 
-    public int getNumJankFrames() {
-        return getSortedJankFrameIndices().length;
-    }
-
-    public int getNumBadFrames() {
-        int num_bad_frames = 0;
-        int totalFrameCount = getTotalFrameCount();
-        for (int i = 0; i < totalFrameCount; i++) {
-            double totalDuration = getMetricAtIndex(i, FrameMetrics.TOTAL_DURATION);
-            if (totalDuration >= JANK_PENALTY_THRESHOLD_MS) {
-                num_bad_frames++;
-            }
-        }
-
-        return num_bad_frames;
-    }
-
-
-    public int getJankPenalty() {
-        double total95th = mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)]
-                .getPercentile(95);
-        System.out.println("95: " + total95th);
-        double aboveThreshold = total95th - JANK_PENALTY_THRESHOLD_MS;
+    fun getJankPenalty(): Int {
+        val total95th = mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)]
+                .getPercentile(95.0)
+        println("95: $total95th")
+        val aboveThreshold = total95th - JANK_PENALTY_THRESHOLD_MS
         if (0 >= aboveThreshold) {
-            return 0;
+            return 0
         }
-
-        if (aboveThreshold > ZERO_SCORE_ABOVE_THRESHOLD_MS) {
-            return BASE_SCORE;
-        }
-
-        return (int) Math.ceil(JANK_PENALTY_PER_MS_ABOVE_THRESHOLD * aboveThreshold);
+        return if (aboveThreshold > ZERO_SCORE_ABOVE_THRESHOLD_MS) {
+            BASE_SCORE
+        } else Math.ceil(JANK_PENALTY_PER_MS_ABOVE_THRESHOLD * aboveThreshold).toInt()
     }
 
-    public int getConsistencyBonus() {
-        DescriptiveStatistics totalDurationStats =
-                mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)];
-
-        double standardDeviation = totalDurationStats.getStandardDeviation();
-        if (0 == standardDeviation) {
-            return CONSISTENCY_BONUS_MAX;
+    fun getConsistencyBonus(): Int {
+        val totalDurationStats = mStoredStatistics[getMetricPosition(FrameMetrics.TOTAL_DURATION)]
+        val standardDeviation = totalDurationStats!!.standardDeviation
+        if (0.0 == standardDeviation) {
+            return CONSISTENCY_BONUS_MAX
         }
 
         // 1 / CV of the total duration.
-        double bonus = totalDurationStats.getMean() / standardDeviation;
-        return (int) Math.min(Math.round(bonus), CONSISTENCY_BONUS_MAX);
+        val bonus = totalDurationStats.mean / standardDeviation
+        return Math.min(Math.round(bonus), CONSISTENCY_BONUS_MAX.toLong()).toInt()
     }
 
-    public int[] getSortedJankFrameIndices() {
-        ArrayList<Integer> jankFrameIndices = new ArrayList<>();
-        boolean tripleBuffered = false;
-        int totalFrameCount = getTotalFrameCount();
-        int totalDurationPos = getMetricPosition(FrameMetrics.TOTAL_DURATION);
-
-        for (int i = 0; i < totalFrameCount; i++) {
-            double thisDuration = mStoredStatistics[totalDurationPos].getElement(i);
+    fun getSortedJankFrameIndices(): IntArray {
+        val jankFrameIndices = ArrayList<Int>()
+        var tripleBuffered = false
+        val totalFrameCount = totalFrameCount
+        val totalDurationPos = getMetricPosition(FrameMetrics.TOTAL_DURATION)
+        for (i in 0 until totalFrameCount) {
+            val thisDuration = mStoredStatistics[totalDurationPos]!!.getElement(i)
             if (!tripleBuffered) {
                 if (thisDuration > FRAME_PERIOD_MS) {
-                    tripleBuffered = true;
-                    jankFrameIndices.add(i);
+                    tripleBuffered = true
+                    jankFrameIndices.add(i)
                 }
             } else {
                 if (thisDuration > 2 * FRAME_PERIOD_MS) {
-                    tripleBuffered = false;
-                    jankFrameIndices.add(i);
+                    tripleBuffered = false
+                    jankFrameIndices.add(i)
                 }
             }
         }
-
-        int[] res = new int[jankFrameIndices.size()];
-        int i = 0;
-        for (Integer index : jankFrameIndices) {
-            res[i] = index;
-            i++;
+        val res = IntArray(jankFrameIndices.size)
+        var i = 0
+        for (index in jankFrameIndices) {
+            res[i] = index
+            i++
         }
-        return res;
+        return res
     }
 
-    private int getMetricPosition(int id) {
-        for (int i = 0; i < METRICS.length; i++) {
-            if (id == METRICS[i]) {
-                return i;
+    private fun getMetricPosition(id: Int): Int {
+        for (i in UiBenchmarkResult.Companion.METRICS.indices) {
+            if (id == UiBenchmarkResult.Companion.METRICS.get(i)) {
+                return i
             }
         }
-
-        return -1;
+        return -1
     }
 
-    private void insertMetrics(@NonNull List<FrameMetrics> instances) {
-        for (FrameMetrics frame : instances) {
-            for (int i = 0; i < METRICS.length; i++) {
-                DescriptiveStatistics stats = mStoredStatistics[i];
+    private fun insertMetrics(instances: List<FrameMetrics>) {
+        for (frame in instances) {
+            for (i in UiBenchmarkResult.Companion.METRICS.indices) {
+                var stats = mStoredStatistics[i]
                 if (null == stats) {
-                    stats = new DescriptiveStatistics();
-                    mStoredStatistics[i] = stats;
+                    stats = DescriptiveStatistics()
+                    mStoredStatistics[i] = stats
                 }
-
-                mStoredStatistics[i].addValue(frame.getMetric(METRICS[i]) / (double) 1000000);
+                mStoredStatistics[i]!!.addValue(frame.getMetric(UiBenchmarkResult.Companion.METRICS.get(i)) / 1000000.0)
             }
         }
     }
 
-    private void insertValues(@NonNull double[] values) {
-        if (values.length != METRICS.length) {
-            throw new IllegalArgumentException("invalid values array");
-        }
-
-        for (int i = 0; i < values.length; i++) {
-            DescriptiveStatistics stats = mStoredStatistics[i];
+    private fun insertValues(values: DoubleArray) {
+        require(values.size == UiBenchmarkResult.Companion.METRICS.size) { "invalid values array" }
+        for (i in values.indices) {
+            var stats = mStoredStatistics[i]
             if (null == stats) {
-                stats = new DescriptiveStatistics();
-                mStoredStatistics[i] = stats;
+                stats = DescriptiveStatistics()
+                mStoredStatistics[i] = stats
             }
-
-            mStoredStatistics[i].addValue(values[i]);
+            mStoredStatistics[i]!!.addValue(values[i])
         }
     }
- }
+
+    companion object {
+        private const val METRIC_WAS_JANKY = -1
+        private val METRICS = intArrayOf(
+                FrameMetrics.UNKNOWN_DELAY_DURATION,
+                FrameMetrics.INPUT_HANDLING_DURATION,
+                FrameMetrics.ANIMATION_DURATION,
+                FrameMetrics.LAYOUT_MEASURE_DURATION,
+                FrameMetrics.DRAW_DURATION,
+                FrameMetrics.SYNC_DURATION,
+                FrameMetrics.COMMAND_ISSUE_DURATION,
+                FrameMetrics.SWAP_BUFFERS_DURATION,
+                FrameMetrics.TOTAL_DURATION)
+    }
+}

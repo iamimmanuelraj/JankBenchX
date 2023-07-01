@@ -13,129 +13,112 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.content.res.Resourcesimport
 
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-
-import androidx.annotation.NonNull;
-
-import java.util.Random;
-
-public enum Utils {
+android.graphics.Bitmapimport android.graphics.BitmapFactoryimport java.util.Random
+enum class Utils {
     ;
 
-    private static final int RANDOM_WORD_LENGTH = 10;
-
-    @NonNull
-    public static String getRandomWord(@NonNull Random random, int length) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            char base = random.nextBoolean() ? 'A' : 'a';
-            char nextChar = (char)(random.nextInt(26) + base);
-            builder.append(nextChar);
-        }
-        return builder.toString();
-    }
-
-    @NonNull
-    public static String[] buildStringList(int count) {
-        Random random = new Random(0);
-        String[] result = new String[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = getRandomWord(random, RANDOM_WORD_LENGTH);
+    companion object {
+        private const val RANDOM_WORD_LENGTH = 10
+        fun getRandomWord(random: Random, length: Int): String {
+            val builder = StringBuilder()
+            for (i in 0 until length) {
+                val base = if (random.nextBoolean()) 'A' else 'a'
+                val nextChar = (random.nextInt(26) + base.code).toChar()
+                builder.append(nextChar)
+            }
+            return builder.toString()
         }
 
-        return result;
-    }
+        fun buildStringList(count: Int): Array<String?> {
+            val random = Random(0)
+            val result = arrayOfNulls<String>(count)
+            for (i in 0 until count) {
+                result[i] = getRandomWord(random, RANDOM_WORD_LENGTH)
+            }
+            return result
+        }
 
-     // a small number of strings reused frequently, expected to hit
-    // in the word-granularity text layout cache
-    static final String[] CACHE_HIT_STRINGS = {
-            "a",
-            "small",
-            "number",
-            "of",
-            "strings",
-            "reused",
-            "frequently"
-    };
+        // a small number of strings reused frequently, expected to hit
+        // in the word-granularity text layout cache
+        val CACHE_HIT_STRINGS = arrayOf(
+                "a",
+                "small",
+                "number",
+                "of",
+                "strings",
+                "reused",
+                "frequently"
+        )
+        private const val WORDS_IN_PARAGRAPH = 150
 
-    private static final int WORDS_IN_PARAGRAPH = 150;
-
-    // misses are fairly long 'words' to ensure they miss
-    private static final int PARAGRAPH_MISS_MIN_LENGTH = 4;
-    private static final int PARAGRAPH_MISS_MAX_LENGTH = 9;
-
-    @NonNull
-    static String[] buildParagraphListWithHitPercentage(int paragraphCount, int hitPercentage) {
-        if (0 > hitPercentage || 100 < hitPercentage) throw new IllegalArgumentException();
-
-        String[] strings = new String[paragraphCount];
-        Random random = new Random(0);
-        for (int i = 0; i < strings.length; i++) {
-            StringBuilder result = new StringBuilder();
-            for (int word = 0; Utils.WORDS_IN_PARAGRAPH > word; word++) {
-                if (0 != word) {
-                    result.append(" ");
+        // misses are fairly long 'words' to ensure they miss
+        private const val PARAGRAPH_MISS_MIN_LENGTH = 4
+        private const val PARAGRAPH_MISS_MAX_LENGTH = 9
+        fun buildParagraphListWithHitPercentage(paragraphCount: Int, hitPercentage: Int): Array<String?> {
+            require(!(0 > hitPercentage || 100 < hitPercentage))
+            val strings = arrayOfNulls<String>(paragraphCount)
+            val random = Random(0)
+            for (i in strings.indices) {
+                val result = StringBuilder()
+                var word = 0
+                while (WORDS_IN_PARAGRAPH > word) {
+                    if (0 != word) {
+                        result.append(" ")
+                    }
+                    if (random.nextInt(100) < hitPercentage) {
+                        // add a common word, which is very likely to hit in the cache
+                        result.append(CACHE_HIT_STRINGS[random.nextInt(CACHE_HIT_STRINGS.size)])
+                    } else {
+                        // construct a random word, which will *most likely* miss
+                        var length = PARAGRAPH_MISS_MIN_LENGTH
+                        length += random.nextInt(PARAGRAPH_MISS_MAX_LENGTH - PARAGRAPH_MISS_MIN_LENGTH)
+                        result.append(getRandomWord(random, length))
+                    }
+                    word++
                 }
-                if (random.nextInt(100) < hitPercentage) {
-                    // add a common word, which is very likely to hit in the cache
-                    result.append(CACHE_HIT_STRINGS[random.nextInt(CACHE_HIT_STRINGS.length)]);
-                } else {
-                    // construct a random word, which will *most likely* miss
-                    int length = PARAGRAPH_MISS_MIN_LENGTH;
-                    length += random.nextInt(PARAGRAPH_MISS_MAX_LENGTH - PARAGRAPH_MISS_MIN_LENGTH);
+                strings[i] = result.toString()
+            }
+            return strings
+        }
 
-                    result.append(getRandomWord(random, length));
+        fun calculateInSampleSize(
+                options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+            // Raw height and width of image
+            val height = options.outHeight
+            val width = options.outWidth
+            var inSampleSize = 1
+            if (height > reqHeight || width > reqWidth) {
+                val halfHeight = height / 2
+                val halfWidth = width / 2
+
+                // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+                // height and width larger than the requested height and width.
+                while (halfHeight / inSampleSize > reqHeight
+                        && halfWidth / inSampleSize > reqWidth) {
+                    inSampleSize *= 2
                 }
             }
-            strings[i] = result.toString();
+            return inSampleSize
         }
 
-        return strings;
-    }
+        fun decodeSampledBitmapFromResource(res: Resources?, resId: Int,
+                                            reqWidth: Int, reqHeight: Int): Bitmap {
 
+            // First decode with inJustDecodeBounds=true to check dimensions
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeResource(res, resId, options)
 
-    public static int calculateInSampleSize(
-            @NonNull BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
 
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) > reqHeight
-                    && (halfWidth / inSampleSize) > reqWidth) {
-                inSampleSize *= 2;
-            }
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false
+            return BitmapFactory.decodeResource(res, resId, options)
         }
-
-        return inSampleSize;
     }
-
-    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
-                                                         int reqWidth, int reqHeight) {
-
-        // First decode with inJustDecodeBounds=true to check dimensions
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(res, resId, options);
-
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeResource(res, resId, options);
-    }
-
 }

@@ -13,109 +13,84 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.content.Context
+import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.os.Bundle
+import android.view.MotionEvent
+import android.view.View
+import androidx.annotation.Keep
+import androidx.appcompat.app.AppCompatActivity
+import com.android.benchmark.R
+import com.android.benchmark.registry.BenchmarkRegistry
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import com.android.benchmark.ui.automation.Interaction
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
+class FullScreenOverdrawActivity : AppCompatActivity() {
+    private var mAutomator: Automator? = null
 
-import androidx.annotation.Keep;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.MotionEvent;
-import android.view.View;
-
-import com.android.benchmark.R;
-import com.android.benchmark.registry.BenchmarkRegistry;
-import com.android.benchmark.ui.automation.Automator;
-import com.android.benchmark.ui.automation.Interaction;
-
-public class FullScreenOverdrawActivity extends AppCompatActivity {
-
-    private Automator mAutomator;
-
-    private class OverdrawView extends View {
-        @NonNull
-        Paint paint = new Paint();
-        int mColorValue;
-
-        public OverdrawView(Context context) {
-            super(context);
-        }
-
+    private inner class OverdrawView(context: Context?) : View(context) {
+        var paint = Paint()
+        var mColorValue = 0
         @Keep
-        @SuppressWarnings("unused")
-        public void setColorValue(int colorValue) {
-            mColorValue = colorValue;
-            invalidate();
+        fun setColorValue(colorValue: Int) {
+            mColorValue = colorValue
+            invalidate()
         }
 
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            ObjectAnimator objectAnimator = ObjectAnimator.ofInt(this, "colorValue", 0, 255);
-            objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
-            objectAnimator.setRepeatCount(100);
-            objectAnimator.start();
-            return super.onTouchEvent(event);
+        override fun onTouchEvent(event: MotionEvent): Boolean {
+            val objectAnimator = ObjectAnimator.ofInt(this, "colorValue", 0, 255)
+            objectAnimator.repeatMode = ValueAnimator.REVERSE
+            objectAnimator.repeatCount = 100
+            objectAnimator.start()
+            return super.onTouchEvent(event)
         }
 
-        @Override
-        protected void onDraw(@NonNull Canvas canvas) {
-            paint.setColor(Color.rgb(mColorValue, 255 - mColorValue, 255));
-
-            for (int i = 0; 10 > i; i++) {
-                canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        override fun onDraw(canvas: Canvas) {
+            paint.color = Color.rgb(mColorValue, 255 - mColorValue, 255)
+            var i = 0
+            while (10 > i) {
+                canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+                i++
             }
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        final OverdrawView overdrawView = new OverdrawView(this);
-        overdrawView.setKeepScreenOn(true);
-        setContentView(overdrawView);
-
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
-
-        String name = BenchmarkRegistry.getBenchmarkName(this, R.id.benchmark_overdraw);
-
-        mAutomator = new Automator(name, runId, iteration, getWindow(),
-                new Automator.AutomateCallback() {
-                    @Override
-                    public void onPostAutomate() {
-                        Intent result = new Intent();
-                        setResult(Activity.RESULT_OK, result);
-                        finish();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val overdrawView = OverdrawView(this)
+        overdrawView.keepScreenOn = true
+        setContentView(overdrawView)
+        val runId = intent.getIntExtra("com.android.benchmark.RUN_ID", 0)
+        val iteration = intent.getIntExtra("com.android.benchmark.ITERATION", -1)
+        val name: String = BenchmarkRegistry.Companion.getBenchmarkName(this, R.id.benchmark_overdraw)
+        mAutomator = Automator(name, runId, iteration, window,
+                object : AutomateCallback() {
+                    override fun onPostAutomate() {
+                        val result = Intent()
+                        setResult(RESULT_OK, result)
+                        finish()
                     }
 
-                    @Override
-                    public void onAutomate() {
-                        int[] coordinates = new int[2];
-                        overdrawView.getLocationOnScreen(coordinates);
-
-                        int x = coordinates[0];
-                        int y = coordinates[1];
-
-                        float width = overdrawView.getWidth();
-                        float height = overdrawView.getHeight();
-
-                        float middleX = (x + width) / 5;
-                        float middleY = (y + height) / 5;
-
-                        addInteraction(Interaction.newTap(middleX, middleY));
+                    override fun onAutomate() {
+                        val coordinates = IntArray(2)
+                        overdrawView.getLocationOnScreen(coordinates)
+                        val x = coordinates[0]
+                        val y = coordinates[1]
+                        val width = overdrawView.width.toFloat()
+                        val height = overdrawView.height.toFloat()
+                        val middleX = (x + width) / 5
+                        val middleY = (y + height) / 5
+                        addInteraction(Interaction.Companion.newTap(middleX, middleY))
                     }
-                });
-
-        mAutomator.start();
+                })
+        mAutomator!!.start()
     }
 }

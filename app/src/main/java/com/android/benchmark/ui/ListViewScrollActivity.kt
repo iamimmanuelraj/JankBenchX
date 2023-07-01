@@ -13,105 +13,77 @@
  * License.
  *
  */
+package com.android.benchmark.ui
 
-package com.android.benchmark.ui;
+import android.content.Intent
+import android.os.Bundle
+import android.view.FrameMetrics
+import android.widget.ArrayAdapter
+import android.widget.FrameLayout
+import android.widget.ListAdapter
+import com.android.benchmark.R
+import com.android.benchmark.ui.automation.Automator
+import com.android.benchmark.ui.automation.Automator.AutomateCallback
+import com.android.benchmark.ui.automation.Interaction
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
+open class ListViewScrollActivity : ListActivityBase() {
+    private var mAutomator: Automator? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val runId = intent.getIntExtra("com.android.benchmark.RUN_ID", 0)
+        val iteration = intent.getIntExtra("com.android.benchmark.ITERATION", -1)
+        val actionBar = supportActionBar
+        actionBar?.setTitle(title)
+        mAutomator = Automator(name, runId, iteration, window,
+                object : AutomateCallback() {
+                    override fun onPostAutomate() {
+                        val result = Intent()
+                        setResult(RESULT_OK, result)
+                        finish()
+                    }
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import android.view.FrameMetrics;
-import android.view.MotionEvent;
-import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
-import android.widget.ListAdapter;
-
-import com.android.benchmark.R;
-import com.android.benchmark.ui.automation.Automator;
-import com.android.benchmark.ui.automation.Interaction;
-
-import java.io.File;
-import java.util.List;
-
-public class ListViewScrollActivity extends ListActivityBase {
-
-    private static final int LIST_SIZE = 400;
-    private static final int INTERACTION_COUNT = 4;
-
-    @Nullable
-    private Automator mAutomator;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final int runId = getIntent().getIntExtra("com.android.benchmark.RUN_ID", 0);
-        final int iteration = getIntent().getIntExtra("com.android.benchmark.ITERATION", -1);
-
-        ActionBar actionBar = getSupportActionBar();
-        if (null != actionBar) {
-            actionBar.setTitle(getTitle());
-        }
-
-        mAutomator = new Automator(getName(), runId, iteration, getWindow(),
-                new Automator.AutomateCallback() {
-            @Override
-            public void onPostAutomate() {
-                Intent result = new Intent();
-                setResult(Activity.RESULT_OK, result);
-                finish();
-            }
-
-            @Override
-            public void onPostInteraction(List<FrameMetrics> metrics) {}
-
-            @Override
-            public void onAutomate() {
-                FrameLayout v = findViewById(R.id.list_fragment_container);
-
-                int[] coordinates = new int[2];
-                v.getLocationOnScreen(coordinates);
-
-                int x = coordinates[0];
-                int y = coordinates[1];
-
-                float width = v.getWidth();
-                float height = v.getHeight();
-
-                float middleX = (x + width) / 5;
-                float middleY = (y + height) / 5;
-
-                Interaction flingUp = Interaction.newFlingUp(middleX, middleY);
-                Interaction flingDown = Interaction.newFlingDown(middleX, middleY);
-
-                for (int i = 0; ListViewScrollActivity.INTERACTION_COUNT > i; i++) {
-                    addInteraction(flingUp);
-                    addInteraction(flingDown);
-                }
-            }
-        });
-
-        mAutomator.start();
+                    override fun onPostInteraction(metrics: List<FrameMetrics>?) {}
+                    override fun onAutomate() {
+                        val v = findViewById<FrameLayout>(R.id.list_fragment_container)
+                        val coordinates = IntArray(2)
+                        v.getLocationOnScreen(coordinates)
+                        val x = coordinates[0]
+                        val y = coordinates[1]
+                        val width = v.width.toFloat()
+                        val height = v.height.toFloat()
+                        val middleX = (x + width) / 5
+                        val middleY = (y + height) / 5
+                        val flingUp: Interaction = Interaction.Companion.newFlingUp(middleX, middleY)
+                        val flingDown: Interaction = Interaction.Companion.newFlingDown(middleX, middleY)
+                        var i = 0
+                        while (INTERACTION_COUNT > i) {
+                            addInteraction(flingUp)
+                            addInteraction(flingDown)
+                            i++
+                        }
+                    }
+                })
+        mAutomator!!.start()
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (null != this.mAutomator) {
-            mAutomator.cancel();
-            mAutomator = null;
+    override fun onPause() {
+        super.onPause()
+        if (null != mAutomator) {
+            mAutomator!!.cancel()
+            mAutomator = null
         }
     }
 
-    @Override
-    protected ListAdapter createListAdapter() {
-        return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
-                Utils.buildStringList(LIST_SIZE));
+    override fun createListAdapter(): ListAdapter {
+        return ArrayAdapter<String?>(this, android.R.layout.simple_list_item_1,
+                Utils.Companion.buildStringList(LIST_SIZE))
     }
 
-    @Override
-    protected String getName() {
-        return getString(R.string.list_view_scroll_name);
+    protected override val name: String?
+        protected get() = getString(R.string.list_view_scroll_name)
+
+    companion object {
+        private const val LIST_SIZE = 400
+        private const val INTERACTION_COUNT = 4
     }
 }
